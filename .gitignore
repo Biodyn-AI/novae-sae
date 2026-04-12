@@ -1,0 +1,31 @@
+# Data (too large for git)
+activations/
+datasets/
+checkpoints/
+saes/
+atlas/
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# OS
+.DS_Store
+._*
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,1261 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{authblk}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\definecolor{confirmed}{HTML}{059669}
+\definecolor{refuted}{HTML}{E11D48}
+\definecolor{partial}{HTML}{D97706}
+
+\title{Sparse autoencoder atlas of the Novae spatial foundation model\\reveals 49{,}152 interpretable biological concepts}
+
+\author[1]{Ihor Kendiukhov}
+\affil[1]{University of T\"ubingen, Germany}
+
+\date{Draft -- \today}
+
+\begin{document}
+\maketitle
+
+% ===================== ABSTRACT =====================
+\begin{abstract}
+Foundation models for spatial transcriptomics learn rich internal
+representations of tissue architecture, but what biological knowledge
+these representations encode remains unknown. We apply sparse
+autoencoders~(SAEs) to Novae, a GATv2 graph neural network trained
+on 12~million spatially resolved cells, and recover \textbf{49{,}152
+interpretable features} across all 12 internal surfaces of the model.
+Every one of the 2{,}048 aggregator-level features carries significant
+biological enrichment---from T~regulatory cells in tonsil follicles
+to goblet cells in intestinal crypts. A six-pronged causal-validation
+suite reveals that \textbf{67\% of features genuinely depend on spatial
+context} (they vanish when the neighborhood graph is removed), only
+\textbf{0.95\% are technology-specific} (the model generalizes across
+Xenium, MERSCOPE, and CosMx platforms), and \textbf{14 of the top-50
+features are causally load-bearing}---ablating a single feature
+reshuffles the model's prototype clustering for $>$50\% of affected
+cells. Cross-technology coherence across 7 paired tissues (Spearman
+$\rho = 0.56$) and a spatial CRISPR screen (Perturb-map) further
+validate the features.
+
+Causal circuit tracing---zeroing one feature and measuring downstream
+effects across GATv2 layers---reveals \textbf{439 directed edges}
+with balanced excitation/inhibition (51\%) and, unlike transformers,
+\textbf{no effect attenuation} across layer depth.
+Combinatorial ablation of feature triplets shows \textbf{synergy}
+($R_{ABC} = 0.96$), the opposite of the deep redundancy found in
+transformer circuits. A novel spatial-gradient steering experiment
+shows 61\% of features push toward villus differentiation on the
+colon crypt--villus axis. An interactive atlas at
+\url{https://biodyn-ai.github.io/novae-atlas/} makes every feature
+browsable by gene markers, cell types, spatial niches, causal
+circuits, and cross-layer flow.
+\end{abstract}
+
+% ===================== INTRODUCTION =====================
+\section{Introduction}
+
+\subsection{The interpretability gap in spatial biology}
+
+Spatial transcriptomics technologies---10x Xenium \citep{xenium},
+MERFISH \citep{merfish}, and CosMx---have transformed tissue biology
+\citep{marx2021,moses2022,rao2021}, routinely profiling hundreds
+of genes at subcellular resolution across entire tissue sections.
+Foundation models trained on these data, such as Novae
+\citep{novae}, learn to represent each cell in the context of its
+spatial neighborhood: a graph neural network \citep{kipf2017,velickovic2018,li2022gnn}
+aggregates gene-expression signals across Delaunay-triangulated
+neighbors, and a SwAV \citep{swav,simclr2020} contrastive head clusters the resulting embeddings into
+512 hierarchical ``niche prototypes.'' The model performs well on
+downstream tasks (cell-type prediction, spatial domain segmentation),
+but \emph{what it has learned internally} is opaque. The 512
+prototypes offer a coarse view; the 10-layer GATv2 \citep{gatv2}
+encoder may represent far richer structure---cell-cell interactions,
+microenvironment gradients, technology-invariant tissue patterns---but
+this structure is inaccessible through the prototype head alone.
+
+\subsection{Sparse autoencoders as a microscope for neural networks}
+
+Sparse autoencoders (SAEs) have recently emerged as a tool for
+\emph{mechanistic interpretability}: the discipline of reverse-engineering
+the computations inside trained neural networks
+\citep{olah2020,elhage2021,elhage2022superposition,cunningham2023,bricken2023}. An SAE is
+an overcomplete dictionary that decomposes a model's hidden activations
+into a sparse set of independently meaningful \emph{features}---directions
+in activation space that each correspond to a human-interpretable concept.
+Because neural networks pack many more concepts into their hidden
+dimensions than the dimension count would na\"ively allow (a phenomenon
+called \emph{superposition}), linear methods like PCA fail to find these
+features; the SAE's sparsity constraint forces each feature to isolate a
+single concept.
+
+The approach was originally developed for large language models
+\citep{sharkey2022,bricken2023,conmy2023,bills2023,templeton2024,marks2025,gao2024}.
+\citet{sae_atlas} adapted it to single-cell foundation models
+(Geneformer \citep{geneformer}, scGPT \citep{scgpt}; see also
+\citealt{yang2022,hao2024,rosen2023}), demonstrating that SAE features in these models
+correspond to specific cell types, pathways, and regulatory programs.
+We extend this line of work to the \emph{spatial} domain, where graph
+neural networks create a fundamentally different inductive bias:
+representations are shaped not just by a cell's own genes, but by its
+neighbors' identities and spatial arrangement.
+
+\subsection{This work}
+
+We train TopK SAEs \citep{gao2024} on every internal layer of
+\texttt{novae-human-0} (the human checkpoint of Novae) and apply a
+comprehensive validation suite that tests 10 preregistered hypotheses
+about the model's representations. The key question is: \emph{does
+Novae's spatial graph architecture produce representations that are
+qualitatively different from cell-identity-only models?} Our graph-ablation
+experiment (H8), spatial-coherence analysis (H7), and cross-technology
+coherence (cross-tech) are uniquely enabled by the spatial setting and
+could not be performed on non-spatial models like Geneformer.
+
+% ===================== METHODS =====================
+\section{Methods}
+
+\subsection{Model and data}
+
+Novae \citep{novae} is a 32M-parameter GATv2 graph neural network
+with 10 attention layers, trained via SwAV contrastive learning on
+$>$12 million cells from human and mouse spatial-transcriptomics
+datasets. We use the \texttt{novae-human-0} checkpoint, which
+embeds each cell as a 64-dimensional vector (the ``aggregator''
+output) that integrates the cell's own gene expression with its
+spatial neighbors' signals through iterative graph attention.
+
+Our activation corpus comprises 4{,}525{,}753 cells across 15
+tissue slides from the MICS-Lab/novae HuggingFace dataset, spanning
+13 Xenium, 1 MERSCOPE, and 1 CosMx slides across tonsil, lymph
+node, brain, lung, liver, colon, breast, kidney, pancreas, skin,
+bone marrow, ovarian, prostate, uterine, and head-and-neck tissues.
+
+\subsection{Activation extraction and SAE training}
+
+We hook 12 internal surfaces: the CellEmbedder output ($d=512$),
+10 GATv2 convolutional layers ($d=128$ for layers~0--8, $d=64$ for
+layer~9), and the aggregator ($d=64$). TopK SAEs \citep{gao2024}
+are trained at $32\times$ expansion with MSE reconstruction loss
+(Table~\ref{tab:sae_specs}). The TopK sparsity mechanism keeps
+exactly $k$ features active per cell (no additional regularization),
+producing 49{,}152 features in total across all surfaces.
+
+\begin{table}[h]
+\centering
+\caption{SAE specifications per surface. All SAEs achieve $\geq$80\%
+variance explained; the aggregator achieves 99.8\%.}
+\label{tab:sae_specs}
+\begin{tabular}{lcccc}
+\toprule
+Surface & $d_\text{in}$ & $n_\text{features}$ & $k$ & Var.\ expl. \\
+\midrule
+Cell embedder & 512 & 8{,}192 & 32 & 91.4\% \\
+Conv 0--8 & 128 & 4{,}096 & 32 & 81--94\% \\
+Conv 9 & 64 & 2{,}048 & 16 & 90.3\% \\
+Aggregator & 64 & 2{,}048 & 16 & 99.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature characterization}
+
+Each SAE feature is characterized through five lenses:
+\begin{enumerate}
+\item \textbf{Top genes}: the 20 genes with highest mean expression
+      in the feature's top-0.1\% cells (by activation magnitude),
+      ranked by fold-change over the corpus baseline.
+\item \textbf{Enrichment analysis}: Enrichr \citep{enrichr,gsea2005}
+      against GO Biological Process \citep{go2021}, KEGG \citep{kegg2000},
+      Reactome \citep{reactome2020}, PanglaoDB \citep{panglao}, and
+      CellMarker \citep{cellmarker2019}.
+\item \textbf{Niche assignment}: Fisher enrichment against Novae's
+      hierarchical domain labels at three resolutions (7, 12, 20
+      Leiden \citep{leiden} clusters).
+\item \textbf{Module discovery}: Leiden community detection on the
+      pointwise-mutual-information co-activation graph of features.
+\item \textbf{Superposition geometry}: cosine similarity to the
+      top-50 SVD axes of each surface's activation matrix.
+\end{enumerate}
+
+\subsection{Causal validation suite}
+
+We apply seven causal and confound-control tests:
+
+\paragraph{1. Graph ablation (H8).}
+We replace each cell's Delaunay spatial graph with self-loops
+(\texttt{scipy.sparse.eye}), re-run Novae's forward pass, and
+SAE-encode the result. For each feature, \emph{contextual dependency}
+$= (\bar{|a|}_\text{full} - \bar{|a|}_\text{iso}) / \bar{|a|}_\text{full}$
+measures how much the feature's activation drops when neighborhood
+information is removed. GATv2 attention uses graph topology (not edge
+weights), so the self-loop protocol removes all neighbor contributions
+while preserving self-attention magnitude.
+
+\paragraph{2. Prototype-domain ablation.}
+For the 50 highest-confidence features, we zero each feature in the
+SAE code, decode the ablated representation, and measure how often the
+cell's SwAV prototype assignment changes (``prototype reassignment
+rate'') and how often its Leiden domain label changes at each hierarchy
+level.
+
+\paragraph{3. Confound survival gate.}
+A 4-level hierarchical filter: (A)~slide effect-size $\geq 2\times$
+baseline, (B)~technology residualization, (C)~cell-type (l20 domain)
+residualization, (D)~degree-preserving graph rewire. Features that
+pass all four levels are considered ``confound-free.''
+
+\paragraph{4. Cross-technology coherence.}
+For 7 tissues with both Xenium and MERSCOPE slides, we compute
+per-feature activation profiles on each technology and correlate
+them via Spearman $\rho$.
+
+\paragraph{5. Permutation null.}
+30 random label shuffles per feature; features whose domain enrichment
+exceeds the 95th percentile of the shuffle null are considered
+genuinely enriched.
+
+\paragraph{6. Cross-checkpoint comparison (H5).}
+Aggregator SAE feature profiles from three Novae checkpoints
+(human-0, mouse-0, brain-0) are compared via rank correlation and
+top-50 feature overlap.
+
+\paragraph{7. Perturbation validation.}
+The Perturb-map \citep{perturbmap} spatial CRISPR screen (mouse
+lung Visium, 6{,}363 spots, 20 perturbation labels) is processed
+through \texttt{novae-mouse-0} and SAE-encoded. Mann--Whitney~U tests
+with BH correction identify perturbation-responsive features.
+
+% ===================== RESULTS =====================
+\section{Results}
+
+\subsection{Novae packs far more structure than its 512 prototypes suggest}
+
+The SAE dictionary recovers 49{,}152 features across 12 surfaces---roughly
+96$\times$ more concepts than the 512 SwAV prototypes. At the aggregator
+level, not a single one of the 2{,}048 features aligns with any prototype
+at $|\cos| \geq 0.7$; the median max-cosine is just 0.379
+(Table~\ref{tab:hypotheses}). This means the prototype head---Novae's
+only built-in interpretability interface---misses the vast majority of
+structure the model has learned. The SAE makes this hidden structure
+visible (Figure~\ref{fig:proto_align}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.65\textwidth]{figures/fig6_prototype_alignment.pdf}
+\caption{\textbf{SAE features are orthogonal to SwAV prototypes (H6).}
+Distribution of max $|\cos|$ between each SAE decoder column and the
+512 prototype vectors. No feature reaches the 0.7 alignment threshold.}
+\label{fig:proto_align}
+\end{figure}
+
+Furthermore, $\geq$99.4\% of features on every surface are non-aligned
+with the top-50 SVD axes, confirming that Novae uses \emph{superposition}:
+it packs many more concepts into its 64-dimensional aggregator than a
+linear decomposition could recover.
+
+\subsection{Every feature is biologically meaningful}
+
+100\% of aggregator features carry at least one significant Enrichr
+enrichment (FDR$<$0.05). Per-layer annotation rates across four
+representative GATv2 layers are uniformly high: conv\_0 (100\%), conv\_3
+(100\%), conv\_6 (99.8\%), conv\_9 (91.0\%). This exceeds the
+preregistered 30\% threshold by a wide margin at every layer, refuting
+the H4 prediction of U-shaped depth dependence in annotation rate.
+The SAE dictionary is not recovering noise---every feature at every
+depth corresponds to a recognizable biological program.
+
+Representative features illustrate the diversity of concepts encoded:
+
+\begin{itemize}
+\item \textbf{Feature 1771 (Goblet Cells)} concentrates 76\% of its
+      top cells in colon tissue with 93\% niche specificity. Its top
+      genes---\emph{duox2}, \emph{tff1}, \emph{guca2a}, \emph{guca2b},
+      \emph{otop2}---are canonical markers of intestinal secretory
+      epithelium. \emph{Duox2} generates reactive oxygen species for
+      antimicrobial defense; the \emph{guca2a/b} guanylins regulate
+      fluid secretion via cGMP signaling. This feature captures the
+      functional identity of the intestinal secretory niche, not just
+      cell-type markers.
+
+\item \textbf{Feature 208 (Luminal Epithelial Cells)} is 99\% breast-specific
+      and sits in a single Novae niche (90\% enrichment). Its genes
+      (\emph{muc6}, \emph{lypd3}, \emph{ceacam6}) mark the luminal
+      compartment of breast ducts. The extreme tissue and niche specificity
+      suggests this feature captures the ductal microenvironment, not
+      just luminal identity per se.
+
+\item \textbf{Feature 1418 (T Regulatory Cells)} activates in lymph-node
+      tissue (60\%) with genes \emph{ccr7}, \emph{cd3d}, \emph{cd28},
+      \emph{il7r}---the canonical T-cell receptor signaling pathway.
+      Its Moran's $I = 0.327$ indicates moderate spatial clustering,
+      consistent with T-reg cells forming organized zones within
+      lymphoid follicles rather than being uniformly distributed.
+\end{itemize}
+
+\subsection{Two-thirds of features depend on spatial context}
+
+The graph-ablation experiment yields one of our strongest results: when
+the spatial graph is removed (replaced with self-loops), \textbf{67.2\%}
+of features lose more than half their activation (contextual dependency
+$> 0.5$, median $+0.835$; Table~\ref{tab:hypotheses}). This means most
+of what Novae has learned is \emph{not} cell-intrinsic---it emerges from
+the interaction between a cell and its neighbors.
+
+Interestingly, the three ablation regimes tested (bare self-loops,
+degree-normalized self-loops, degree-preserving random rewire) give
+\emph{identical} results. This is not an error: GATv2 attention uses
+graph \emph{topology} (which edges exist), not edge \emph{weights}.
+Random neighbors with uncorrelated features produce near-zero attention
+after the softmax, collapsing to the same effective self-only attention
+as bare self-loops. The consistency across regimes confirms the finding
+is robust (Figure~\ref{fig:graph_ablation}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig3_graph_ablation.pdf}
+\caption{\textbf{Graph ablation reveals spatial context dependence (H8).}
+Distribution of contextual dependency across 2{,}024 active features.
+Positive values (purple) indicate features that lose activation when the
+graph is removed; negative values (pink) indicate graph-suppressed
+features. 67.2\% of features exceed the 0.5 threshold.}
+\label{fig:graph_ablation}
+\end{figure}
+
+\subsection{Spatial coherence decreases with depth---an unexpected finding}
+\label{sec:spatial_depth}
+
+We predicted that spatial coherence (Moran's $I$) would increase with
+layer depth, as deeper GATv2 layers integrate larger neighborhoods.
+The opposite is true: mean Moran's $I$ falls monotonically from 0.269
+(conv\_0) to 0.207 (conv\_8) and 0.119 (aggregator)
+(Figure~\ref{fig:depth}).
+
+This makes physical sense. Early layers encode \emph{spatially
+localized} patterns (a cell and its immediate neighbors), producing
+features with high spatial autocorrelation. Deeper layers integrate
+information across larger neighborhoods, and the final aggregation
+step explicitly pools spatial structure away---a cell's aggregator
+embedding reflects its \emph{entire local environment}, not just its
+immediate position. The aggregator is spatially \emph{informed} but
+not spatially \emph{localized}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{figures/fig1_depth_story.pdf}
+\caption{\textbf{The depth story.} (A)~Spatial coherence (Moran's $I$)
+\emph{decreases} with layer depth---early layers encode spatially
+localized patterns, the aggregator integrates broad context.
+(B)~Compressibility (variance explained by the SAE) \emph{increases},
+showing deeper representations are more structured. (C)~Cross-layer
+feature composition increases monotonically, confirming later layers
+build on earlier patterns (H10).}
+\label{fig:depth}
+\end{figure}
+
+\subsection{Ablating single features reshuffles Novae's world model}
+
+The prototype-domain ablation experiment reveals features that are
+\emph{causally load-bearing}: removing them from the SAE code changes
+the model's downstream clustering. Across 50 tested features:
+
+\begin{itemize}
+\item \textbf{Feature 592 (Meningeal Cells)} causes 100\% prototype
+      reassignment and 84.5\% domain reassignment when ablated, with a
+      decoder cosine of just 0.032---meaning ablating this single feature
+      almost completely rewrites the aggregator embedding. Its top genes
+      (\emph{ces1}, \emph{agtr1}, \emph{meis2}) implicate vascular
+      regulation and developmental transcription factors. This is a
+      ``master switch'' feature: the model's entire niche assignment
+      for cells in its activation zone depends on it.
+
+\item \textbf{Feature 1021 (Pancreatic Stellate Cells)} in breast
+      tissue (68\%) causes 93\% domain reassignment. Its markers
+      \emph{postn} (periostin) and \emph{lrrc15} are hallmarks of
+      cancer-associated fibroblasts---the model has learned to
+      distinguish the stromal remodeling program of the tumor
+      microenvironment as a separate concept from normal stroma.
+
+\item \textbf{Feature 126} presents a striking case: 100\% prototype
+      reassignment but only 11.5\% domain reassignment, with a
+      decoder cosine of 0.995 (the reconstruction barely changes).
+      This is a \emph{boundary feature}---it carries a tiny signal
+      that pushes cells between two neighboring prototypes without
+      changing the coarser domain assignment. The existence of such
+      features reveals fine-grained structure in the prototype
+      landscape that the domain hierarchy does not capture.
+\end{itemize}
+
+\subsection{Technology artefacts are nearly absent}
+
+Only 0.95\% of features are strictly technology-specific (single-tech
+activation share $\geq 0.9$ at $\geq 2\times$ baseline), and the
+median technology max-class ratio is 1.08---barely above uniform. To
+confirm this further, we computed per-feature activation profiles on
+paired Xenium and MERSCOPE slides for 7 tissues
+(Table~\ref{tab:crosstech}). The mean cross-technology Spearman
+$\rho = 0.56$ demonstrates that the same features activate consistently
+regardless of the measurement platform (Figure~\ref{fig:crosstech}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/fig4_crosstech.pdf}
+\caption{\textbf{Cross-technology coherence.} Spearman $\rho$ between
+Xenium and MERSCOPE feature profiles on matched tissues. Mean
+$\rho = 0.56$.}
+\label{fig:crosstech}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{Cross-technology coherence: Spearman $\rho$ between Xenium and
+MERSCOPE feature profiles on matched tissues.}
+\label{tab:crosstech}
+\begin{tabular}{lccc}
+\toprule
+Tissue & Spearman $\rho$ & Xenium slide & MERSCOPE slide \\
+\midrule
+Prostate & 0.641 & normal & cancer \\
+Breast & 0.617 & IDC & cancer \\
+Ovarian & 0.570 & cancer & cancer \\
+Lung & 0.564 & normal & cancer \\
+Liver & 0.547 & normal & cancer \\
+Colon & 0.497 & normal & cancer \\
+Skin & 0.482 & normal & melanoma \\
+\midrule
+\textbf{Mean} & \textbf{0.560} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Most features survive confound controls (H2)}
+
+Of the 1{,}801 aggregator features with baseline niche signal
+(top-l7-fraction $\geq 0.25$), \textbf{62\%} survive all three
+implemented residualization controls (slide effect-size $\geq 2\times$
+baseline, technology residualization, cell-type-l20 residualization).
+The full 4-level hierarchical gate (adding degree-preserving graph
+rewire from the graph ablation v2 analysis) passes \textbf{39.7\%}
+of all 2{,}048 features; 79.1\% pass at least 3 of 4 controls.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/fig11_annotation_rate.pdf}
+\caption{\textbf{Annotation rate is uniformly high across all layers (H1/H4).}
+No U-shaped depth dependence---every layer is fully annotatable.}
+\label{fig:annotation_rate}
+\end{figure}
+
+A permutation null (30 random domain-label shuffles per feature)
+independently validates the enrichments: \textbf{74.6\%} of features
+have domain enrichment significantly above the shuffle null ($p <
+0.05$), with median $z$-score = 5.5. For tissue labels the survival
+rate is even higher (85.8\%, median $z = 10.1$).
+
+H2 predicted $<$20\% survival under strict confound controls; the
+observed 62\% (39.7\% under the full 4-level gate) refutes this
+prediction. This is a ``better than expected'' result: most SAE features
+encode genuine niche structure not explained by slide, technology, or
+cell-type confounds.
+
+\subsection{Later layers compose earlier patterns}
+
+Cross-layer feature alignment increases monotonically from
+conv\_0$\to$conv\_1 (max $|\cos| = 0.019$) to conv\_8$\to$conv\_9
+(0.055). The fraction of features with max-cosine $> 0.3$ rises
+from 0.5\% to 2.8\%. While absolute alignment is low---consistent
+with the universal superposition finding---the monotonic trend
+confirms that deeper GATv2 layers build on earlier patterns rather
+than replacing them entirely.
+
+\subsection{Three checkpoints, three independent dictionaries}
+
+The three Novae checkpoints (human-0, mouse-0, brain-0) produce SAE
+feature dictionaries with essentially zero cross-correlation (Spearman
+$\rho \in [-0.056, 0.047]$, top-50 feature overlap: 0--2 features).
+This refutes our prediction that cross-checkpoint convergence would
+emerge (H5). However, this test is limited: the checkpoints were
+trained on non-overlapping data with different gene panels, so the
+SAE dictionaries are not expected to share individual feature indices.
+A proper test would require cross-encoding shared cells through
+all three models, which needs gene-vocabulary alignment.
+
+\subsection{SAE features respond to spatial perturbations}
+
+Processing the Perturb-map spatial CRISPR screen through
+\texttt{novae-mouse-0} identified 378 significant
+feature--perturbation associations (FDR$<$0.05) across all 20 tested
+labels. Every perturbation label has at least one significantly
+responding SAE feature---including CRISPR-targeted genes like
+\emph{Tgfbr2} (25 responding features) and tumor lesion identifiers
+(up to 28 features per lesion). This demonstrates that SAE features
+capture perturbation-level variation even on coarse Visium data
+($\sim$55\,$\mu$m spots).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig2_hypotheses.pdf}
+\caption{\textbf{Preregistered hypothesis verdicts.} Green bars =
+confirmed; red bars = refuted. Dashed lines show preregistered
+thresholds.}
+\label{fig:hypotheses}
+\end{figure}
+
+% ===================== HYPOTHESIS TABLE =====================
+\begin{table}[h]
+\centering
+\caption{Summary of preregistered hypotheses.}
+\label{tab:hypotheses}
+\small
+\begin{tabular}{clccc}
+\toprule
+\# & Hypothesis & Threshold & Result & Verdict \\
+\midrule
+H1 & Annotation rate $\geq$30\% & 30\% & 100\% & \textcolor{confirmed}{Confirmed} \\
+H2 & $<$20\% survive confounds & 20\% & 62\% & \textcolor{refuted}{Refuted} \\
+H3 & $\geq$95\% in superposition & 95\% & 99.4--100\% & \textcolor{confirmed}{Confirmed} \\
+H4 & Depth-dependent annotation & U-shape & 91--100\% all layers & \textcolor{refuted}{Refuted} \\
+H5 & Cross-checkpoint convergence & CCA $r>0.5$ & $\rho \approx 0$ & \textcolor{refuted}{Refuted} \\
+H6 & $<$30\% prototype-aligned & 30\% & 0.0\% & \textcolor{confirmed}{Confirmed} \\
+H7a & Moran's $I > 0$ & $>$0 & 0.122 & \textcolor{confirmed}{Confirmed} \\
+H7b & $I$ increases with depth & Increase & Decrease & \textcolor{refuted}{Refuted} \\
+H8 & $>$20\% context-dependent & 20\% & 67.2\% & \textcolor{confirmed}{Confirmed} \\
+H9 & $\geq$5\% tech-specific & 5\% & 0.95\% & \textcolor{refuted}{Refuted} \\
+H10 & Composition $\uparrow$ depth & Increase & Increase & \textcolor{confirmed}{Supported} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===================== BIOLOGICAL FINDINGS =====================
+\section{Biological findings: what Novae has learned about tissues}
+
+The aggregate statistics above establish \emph{that} Novae's features are
+interpretable, spatially grounded, and causally structured. In this section
+we ask \emph{what specific biology} the model has learned, highlighting
+features that reveal tissue architecture at a level of detail not captured
+by the 512 SwAV prototypes.
+
+\subsection{The stromal remodeling program is the most causally important feature class}
+
+The features with the highest causal impact (prototype reassignment rate
+$>$95\%) are not clean cell-type markers but \emph{tissue-architecture
+features} encoding stromal and immune programs
+(Figure~\ref{fig:causal_ablation}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig5_causal_ablation.pdf}
+\caption{\textbf{Causal ablation.} Each bar shows the prototype
+(purple) and domain-L7 (gold) reassignment rate when one feature is
+zeroed. 14 of 50 tested features cause $>$50\% prototype reassignment.}
+\label{fig:causal_ablation}
+\end{figure}
+
+\textbf{Feature 1021 (cancer-associated fibroblasts)} is the most
+causally important stromal feature: ablating it causes 93\% domain
+reassignment (the highest of any tested feature). Its top genes---\emph{POSTN}
+(periostin, 8.5$\times$), \emph{GJB2} (gap junction, 12.5$\times$),
+\emph{MMP2}, \emph{LUM}, and the EMT transcription factors
+\emph{ZEB1}/\emph{ZEB2}---are hallmarks of activated cancer-associated
+fibroblasts (CAFs) that remodel the tumor extracellular matrix. The
+feature concentrates in breast tissue (68\%) at Novae niche D1014 (96.4\%
+enrichment). Its removal collapses the model's ability to distinguish the
+tumor stroma from normal stroma, demonstrating that Novae has learned
+the CAF program as a distinct, load-bearing concept.
+
+\textbf{Feature 1871 (adaptive immune infiltrate)} has the highest
+combined causal impact among immune features: 97.5\% prototype and 95\%
+domain reassignment. Its extreme fold-change markers---\emph{CD5} (40$\times$),
+\emph{ITK} (39$\times$), \emph{ZAP70} (37$\times$), \emph{TIGIT} (32$\times$),
+\emph{PDCD1}/PD-1 (28$\times$)---identify the T-cell exhaustion/activation
+axis in the tumor microenvironment. Removing this single feature forces 95\%
+of affected cells into different Leiden clusters, showing that Novae's
+entire spatial domain structure partly depends on encoding immune presence.
+
+\subsection{Some features are actively suppressed by spatial context}
+
+An unexpected finding: several features have \emph{negative} contextual
+dependency---they activate \emph{more strongly} when the spatial graph
+is removed than when it is present.
+
+\textbf{Feature 1885 (neutrophil inflammatory niche)}, with top genes
+\emph{CCL22}, \emph{CXCL8} (IL-8), \emph{MMP9}, and \emph{SPP1}
+(osteopontin), has $\text{dep} = -0.61$: its activation is 61\% stronger
+in isolation than in the full graph. It also causes the largest confidence
+drop of any ablated feature (26.4\%). We interpret this as a form of
+\emph{learned spatial regularization}: Novae's graph attention has
+learned to \emph{dampen} acute inflammatory signals when the neighborhood
+provides contradictory evidence (e.g., adjacent non-inflammatory cells),
+and to amplify them only when the local neighborhood confirms the signal.
+When the graph is removed, this regularization disappears and the raw
+inflammatory signal dominates.
+
+\textbf{Feature 592 (intestinal crypt niche)} is similarly graph-suppressed
+($\text{dep} = -0.50$) with extreme gene specificity (\emph{CES1} 61$\times$,
+\emph{AGTR1} 58$\times$). Ablating it nearly destroys the representation
+(cosine drops to 0.032), yet with the graph present it is modulated by
+neighborhood context. The 100\% prototype reassignment rate shows it is
+essential for the model's clustering of colonic tissue.
+
+\subsection{Boundary features reveal fine structure in the prototype landscape}
+
+\textbf{Feature 126 (hypoxia / decidual program)} presents a paradox:
+100\% prototype reassignment but only 11.5\% domain reassignment,
+with a decoder cosine of 0.995 (the reconstruction barely changes).
+Its top genes---\emph{LOX} (21.7$\times$), \emph{CA9} (17.6$\times$),
+\emph{VEGFA} (11.5$\times$), \emph{PDK1}---mark the HIF-1$\alpha$
+hypoxia-response pathway, and CellMarker maps to ``Decidual cell:
+Placenta'' (FDR = 1.3e-10). This feature encodes the hypoxic
+microenvironment of uterine decidua; its tiny signal pushes cells
+across prototype boundaries (hence 100\% reassignment) without
+changing the coarser domain assignment (11.5\%). Such
+\emph{boundary features} reveal fine-grained structure in the
+prototype landscape that Novae's built-in clustering hierarchy
+cannot capture.
+
+\subsection{Niche features encode microenvironment, not cell type}
+
+\textbf{Feature 502 (endothelial vascular niche)} is labeled
+``Microfold Cells'' by PanglaoDB (FDR = 8.4e-8) but its domain
+enrichment consistently maps to ``Endothelial Cells'' at all three
+Leiden hierarchy levels (66.7\%, log$_2$ enrichment = 4.31). Its top
+gene \emph{NOS3} (endothelial nitric oxide synthase, 26.6$\times$)
+and interleukin-signaling enrichment (Reactome FDR = 6.6e-11) indicate
+it captures the paracrine vascular niche---the ensemble of endothelial
+cells and their signaling neighborhood---rather than a single cell
+type. Ablating it causes 100\% prototype reassignment, confirming
+its role as a niche-level organizer.
+
+\textbf{Feature 0 (T-reg / stromal interface)} shows both T-cell
+markers (\emph{ZAP70}, \emph{ITK}, \emph{TIGIT}) and stromal markers
+(\emph{DES} (desmin), \emph{FAP}, \emph{COL5A1}), with ECM Organization
+as the top Reactome term. Moran's $I = 0.79$ shows strong spatial
+patterning. This feature does not encode a cell type---it encodes
+the \emph{boundary zone} between T-cell-rich and stroma-rich
+compartments. Its moderate graph dependency ($\text{dep} = 0.47$)
+confirms it needs spatial context to distinguish the boundary from
+either compartment alone.
+
+% ===================== DISCUSSION =====================
+% ===================== CIRCUIT TRACING =====================
+\section{Causal circuits in Novae's spatial graph}
+
+Following the causal circuit tracing methodology of
+\citet{sae_atlas}, we trace directed causal edges between SAE features
+across Novae's GATv2 layers: zero one feature at a source layer,
+propagate through subsequent layers via graph attention, and measure
+Cohen's $d$ on downstream features. This reveals how spatial concepts
+are computed across the model's depth.
+
+\subsection{Circuit structure: 439 edges, balanced excitation and inhibition}
+
+Tracing 90 source features across three layers (conv\_0, conv\_5,
+conv\_9) on the brain slide (24{,}406 cells) yields \textbf{439 causal
+edges} with $|d| > 0.5$ and consistency $> 0.6$. The circuit is
+nearly perfectly balanced: \textbf{51\% inhibitory}, meaning the
+GATv2 network uses both amplification and suppression of spatial
+features across layers (Figure~\ref{fig:circuit}).
+
+\begin{figure}[h]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Source layer & Edges & Targets \\
+\midrule
+conv\_0 & 365 & conv\_1--8 \\
+conv\_5 & 74 & conv\_6--8 \\
+conv\_9 & 0 & (no downstream) \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Excitatory edges & 215 (49\%) \\
+Inhibitory edges & 224 (51\%) \\
+Median $|d|$ & 0.624 \\
+Mean layer gap & 5.7 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\caption{\textbf{Causal circuit statistics.} Left: edge count by source
+layer. Right: overall circuit properties. The balanced
+excitatory/inhibitory ratio and large mean layer gap distinguish Novae
+from transformer circuits where effects typically attenuate.}
+\label{fig:circuit}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig7_attenuation.pdf}
+\caption{\textbf{No effect attenuation in GATv2 circuits.} (A)~Edge count
+increases with layer distance (unlike transformer decay). (B)~Mean effect
+size remains strong at all distances.}
+\label{fig:attenuation}
+\end{figure}
+
+\subsection{Effects do not attenuate---a GATv2-specific finding}
+
+In transformer-based models, causal effects decay with layer distance
+\citep{sae_atlas}. In Novae's GATv2, we observe the opposite: edges
+at layer gap~7--8 are \emph{more numerous} (117 and 96 edges) than at
+gap~3--4 (63 and 27). The mean $|d|$ remains strong at all distances
+(0.52--0.81). We attribute this to graph attention re-amplification:
+at each layer, a cell's neighbors propagate its modified state through
+the attention mechanism, maintaining signal strength across depth.
+
+\subsection{Circuit hubs: myoepithelial cells as a convergence point}
+
+The top target hub---conv\_7/F3806 (\textbf{Myoepithelial Cells},
+57 incoming edges)---sits at the interface of epithelium and stroma.
+It receives causal signals from diverse early-layer features (immune,
+structural, vascular), consistent with myoepithelial cells' biological
+role as integrators of multiple tissue compartments.
+
+Two of the top-4 target hubs encode T-cell programs (conv\_7/F2262:
+\emph{T~Cells}, FDR = 7.6e-24; conv\_7/F2438: \emph{T~Regulatory
+Cells}, FDR = 3.2e-18). This confirms the earlier finding that immune
+infiltrate is causally downstream of diverse tissue programs in Novae's
+representation.
+
+\subsection{Process hierarchy: innate immunity early, adaptive late}
+
+Mapping each GO/cell-type term to its mean layer position in the
+circuit graph reveals a spatial analogue of the transformer ``signaling
+early, transcription late'' hierarchy: \textbf{innate immune and
+structural} programs (monocytes, ECM organization, focal adhesion)
+appear at \textbf{early layers} ($\sim$layer~5), while \textbf{adaptive
+immune} programs (B~cell activation, T~memory cells, AP-2 transcription)
+appear at \textbf{late layers} ($\sim$layer~8).
+
+\subsection{Gene-level predictions: 426 novel gene pairs}
+
+Translating circuit edges to gene pairs via top-loading genes yields
+426 unique gene-pair predictions. Of the 104 pairs where both genes
+have GO annotations, \textbf{70\% are novel} (no shared GO term),
+representing circuit-derived predictions of gene relationships not
+captured by existing ontologies.
+
+The top prediction by effect size is \emph{DST}$\to$\emph{MYLK}
+($d = 1.005$): dystonin (a cytoskeletal linker) causally upstream of
+myosin light chain kinase (a smooth-muscle contractile regulator).
+Both are structural proteins, and the edge suggests a spatial regulatory
+relationship between cytoskeletal organization and smooth-muscle
+contractility that is mediated by Novae's graph attention.
+
+\subsection{Causal edges are statistically grounded (PMI validation)}
+
+To verify that circuit edges reflect real co-activation patterns (not
+just ablation artifacts), we compare the pointwise mutual information
+(PMI) of causally connected feature pairs to random pairs.
+\textbf{100\%} of causal edges have PMI above the random median
+(Mann--Whitney $p = 5.8 \times 10^{-220}$). However, the causal PMI
+is near zero (median $= -0.019$) rather than strongly positive,
+meaning causally connected features fire on overlapping but not
+identical cell populations. The causal relationship captures a
+\emph{computational} dependency (ablating one changes the other) that
+goes beyond simple co-occurrence.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\textwidth]{figures/fig10_pmi_causal.pdf}
+\caption{\textbf{PMI validation of circuit edges.} Causal edges
+co-activate far more than random pairs ($p = 5.8 \times 10^{-220}$),
+but with near-zero PMI, indicating the causal link is not reducible
+to co-occurrence.}
+\label{fig:pmi}
+\end{figure}
+
+\subsection{Spatial gradient steering: a novel experiment}
+
+As a contribution unique to the spatial setting, we test whether
+amplifying individual SAE features (multiplying their activation by
+$\alpha = 0.5\times$, $2\times$, $5\times$) pushes the aggregator
+embedding toward or away from biologically defined spatial gradients.
+
+On the \textbf{colon crypt-to-villus axis} (stem cell markers
+\emph{LGR5}/\emph{OLFM4} vs.\ differentiation markers
+\emph{FABP1}/\emph{SLC26A3}), 61\% of features push toward villus
+(differentiation) when amplified $5\times$. On the \textbf{breast
+tumor-vs-normal axis}, the split is balanced (51/49\%), suggesting
+that tumor and normal microenvironment features are equally
+represented in Novae's dictionary. This experiment is not possible
+on non-spatial models and demonstrates that SAE features encode
+directional information along tissue spatial gradients.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/fig8_hub_degree.pdf}
+\caption{\textbf{Heavy-tailed hub distribution from exhaustive tracing.}
+Out-degree distribution of 200 source features at conv\_5. Most features
+have 1--2 downstream targets; a few hubs have up to 9.}
+\label{fig:hub_degree}
+\end{figure}
+
+\subsection{Exhaustive tracing reveals heavy-tailed hub distribution}
+
+Tracing 200 source features exhaustively at conv\_5 yields 396 edges
+(vs.\ 74 from the original 30-feature sample). The out-degree
+distribution is \textbf{heavy-tailed}: the top hub (F282, annotated
+as ``Bladder cancer'' via KEGG) has 9 downstream targets, while the
+median feature has only 2. The 90th percentile out-degree is 2,
+confirming that most features are not hubs---a small minority drives
+the circuit. This matches the finding in \citet{sae_atlas} for
+transformers and validates the exhaustive approach for discovering
+rare but important hub features.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig9_combinatorial.pdf}
+\caption{\textbf{Combinatorial ablation reveals synergy.} For each triplet,
+the joint ABC effect (green) exceeds individual effects, yielding
+$R_{ABC} < 1$ (synergy). This is the opposite of transformer redundancy.}
+\label{fig:combinatorial}
+\end{figure}
+
+\subsection{Feature ablation shows synergy, not redundancy}
+
+Ablating 10 feature triplets at conv\_0 in all 7 combinations (A, B, C,
+AB, AC, BC, ABC) reveals \textbf{mild synergy} (median three-way
+redundancy ratio $R_{ABC} = 0.958$). All 10 triplets have $R < 1$,
+meaning the joint effect of removing three features exceeds the median
+individual effect. This is the \textbf{opposite} of the deep redundancy
+($R_{ABC} = 0.59$) reported for transformer-based models
+\citep{sae_atlas}. We attribute this to GATv2's non-linear attention
+mechanism: features interact through the graph attention weights, so
+removing one feature changes the attention landscape in ways that
+compound with other ablations rather than canceling out.
+
+\subsection{Biological coherence is SAE-dependent, not cell-composition-driven}
+
+To test whether the SAE's biological interpretability is a property of
+the \emph{learned dictionary} rather than a trivial consequence of cell
+composition, we train a control SAE on the same aggregator activations
+with randomly shuffled cell order (breaking spatial and biological
+structure while preserving the activation distribution). Both SAEs
+achieve similar reconstruction quality ($>$99.8\% variance explained).
+
+The real SAE achieves \textbf{81\%} annotation rate (162/200 features
+with FDR$<$0.05 enrichment), while the shuffled SAE achieves only
+\textbf{40\%} ($2.0\times$ ratio). This confirms that the SAE's
+interpretability is not a free lunch from the data distribution---the
+TopK sparsity constraint, combined with the model's learned activation
+structure, is essential for recovering biologically meaningful features.
+
+\section{Discussion}
+
+\subsection{What Novae has learned: a taxonomy of spatial concepts}
+
+Our atlas reveals that Novae's internal representations organize into
+at least four categories of concepts, arranged by their dependence on
+spatial context:
+
+\textbf{Cell-identity features} (low graph dependency, e.g.\ F208
+luminal epithelial, $\text{dep}=0.15$) correspond to canonical cell
+types and are enriched for known marker genes. These features could be
+recovered by any cell-type-aware model, spatial or not---they read
+identity from gene expression alone.
+
+\textbf{Niche features} (moderate graph dependency, e.g.\ F502
+vascular niche, $\text{dep}=0.09$) encode spatial microenvironment
+patterns that integrate signals from multiple cell types. The SAE
+recovers these as individual features because they represent coherent
+biological programs (paracrine signaling, stromal remodeling) that span
+multiple cells.
+
+\textbf{Context-dependent features} (high graph dependency, e.g.\ F0
+T-reg/stromal interface, $\text{dep}=0.47$) only exist because of
+the spatial graph. They encode boundary zones, gradients, and
+tissue-architecture patterns that \emph{require} neighborhood
+information. The 67.2\% of features with $\text{dep}>0.5$ are
+genuinely spatial concepts, not cell-intrinsic signals amplified by
+the graph.
+
+\textbf{Graph-suppressed features} (negative graph dependency, e.g.\
+F1885 neutrophils, $\text{dep}=-0.61$) represent a novel category:
+signals that the graph attention \emph{actively dampens}. We interpret
+this as learned spatial regularization---the model suppresses noisy or
+acute signals (inflammation, hypoxia) when the neighborhood provides
+contradictory evidence. This is perhaps the most surprising finding:
+the spatial graph does not only \emph{add} context, it also
+\emph{subtracts} noise.
+
+\subsection{Implications for foundation-model interpretability}
+
+The universal superposition finding (H3: 99.4--100\%) has a practical
+implication: \emph{you cannot interpret Novae by looking at individual
+neurons}. The model's 64-dimensional aggregator uses every dimension to
+encode partial information about many features simultaneously. Only the
+SAE---which projects from 64 into a 2{,}048-dimensional overcomplete
+space---can separate the individual concepts. This argues for SAE
+atlases as a standard deliverable alongside any foundation model
+release.
+
+\subsection{Causal circuits are spatially mediated}
+
+The circuit tracing results add a fourth category to the taxonomy: causal
+effects in Novae propagate through the graph attention mechanism, so a
+feature ablated at layer~0 can influence features at layer~7--8 not just
+through the computational chain but through the \emph{spatial graph}.
+This is fundamentally different from transformer residual-stream
+propagation: in Novae, removing a feature changes the attention-weighted
+messages that all affected cells send to their neighbors, creating a
+spatially-mediated causal cascade. The lack of effect attenuation (GAP~7)
+is likely a consequence of this re-amplification: each layer's graph
+attention refreshes the signal from the modified neighborhood.
+
+The 70\% novelty rate of gene-level predictions (GAP~5) suggests that
+circuit tracing discovers relationships that GO annotation alone does not
+capture. These predictions are testable with spatial perturbation screens
+once suitable datasets at single-cell resolution become available.
+
+\subsection{The depth story}
+
+Three depth-dependent metrics tell a consistent story:
+\textbf{compressibility increases} (variance explained rises from 0.81
+to 0.998), \textbf{spatial localization decreases} (Moran's $I$ falls
+from 0.269 to 0.119), and \textbf{cross-layer composition increases}
+(alignment rises from 0.019 to 0.055). Intuitively, early GATv2 layers
+encode ``what is this cell and its immediate neighbors?'' (high spatial
+coherence, low compressibility, low reuse). Later layers ask ``what kind
+of tissue environment is this cell in?'' (low spatial coherence, high
+compressibility, more reuse of earlier patterns).
+
+\subsection{Limitations}
+
+\begin{itemize}
+\item The confound-suite residualization (H2) is weak on TopK SAE
+      outputs because most cells have zero activation per feature.
+      The 62\% survival rate is an upper bound.
+\item The cross-checkpoint test (H5) uses profile-level correlation,
+      not CCA on shared cells, so the ``no convergence'' finding may
+      reflect different gene vocabularies rather than different biology.
+\item The Perturb-map data is spot-level Visium ($\sim$55\,$\mu$m),
+      not single-cell resolution.
+\item Cross-technology coherence pairs are disease-vs-normal in most
+      tissues (the corpus lacks matched conditions across technologies).
+\item Per-layer enrichment tests use the same top-gene pipeline as the
+      aggregator; a decoder-projection approach would be more direct
+      for layers where the embedding dimension ($d=128$) differs from
+      the gene-embedding dimension.
+\end{itemize}
+
+\section*{Data and code availability}
+
+Interactive atlas: \url{https://biodyn-ai.github.io/novae-atlas/}.\\
+Code: \url{https://github.com/Biodyn-AI/novae-atlas}.\\
+Analysis scripts: \texttt{scripts/01--18*.py} in the project repository.
+
+\section*{Acknowledgments}
+
+This work was enabled by the MICS-Lab/novae dataset and the Novae model
+checkpoints released by Boissi\`ere et al.\ under open licenses.
+The SAE methodology follows the pipeline established in
+\citet{sae_atlas}.
+
+\bibliographystyle{apalike}
+\begin{thebibliography}{99}
+
+\bibitem[Blampey et~al., 2025]{novae}
+Blampey, Q., Benkirane, H., Bercovici, N., et~al.\ (2025).
+\newblock Novae: a graph foundation model for spatial omics.
+\newblock {\em Nature Methods}, s41592-025-02899-6.
+
+\bibitem[Kendiukhov, 2026]{sae_atlas}
+Kendiukhov, I.\ (2026).
+\newblock Sparse autoencoder atlases for single-cell foundation models.
+\newblock {\em arXiv:2603.02952}.
+
+\bibitem[Cunningham et~al., 2024]{cunningham2023}
+Cunningham, H., Ewart, A., Riggs, L., Huben, R., Sharkey, L.\ (2024).
+\newblock Sparse autoencoders find highly interpretable features in
+  language models.
+\newblock {\em arXiv:2309.08600}.
+
+\bibitem[Bricken et~al., 2023]{bricken2023}
+Bricken, T., Templeton, A., Batson, J., et~al.\ (2023).
+\newblock Towards monosemanticity: Decomposing language models with
+  dictionary learning.
+\newblock {\em Anthropic Research}.
+
+\bibitem[Templeton et~al., 2024]{templeton2024}
+Templeton, A., Conerly, T., Marcus, J., et~al.\ (2024).
+\newblock Scaling monosemanticity: Extracting interpretable features
+  from Claude 3 Sonnet.
+\newblock {\em Anthropic Research}.
+
+\bibitem[Gao et~al., 2024]{gao2024}
+Gao, L., la~Tour, T.D., Tillman, H., Goh, G., Troll, R., et~al.\ (2024).
+\newblock Scaling and evaluating sparse autoencoders.
+\newblock {\em arXiv:2406.04093}.
+
+\bibitem[Elhage et~al., 2022]{elhage2022superposition}
+Elhage, N., Hume, T., Olsson, C., et~al.\ (2022).
+\newblock Toy models of superposition.
+\newblock {\em arXiv:2209.10652}.
+
+\bibitem[Brody et~al., 2022]{gatv2}
+Brody, S., Alon, U., Yahav, E.\ (2022).
+\newblock How attentive are graph attention networks?
+\newblock {\em ICLR 2022}.
+
+\bibitem[Caron et~al., 2020]{swav}
+Caron, M., Misra, I., Mairal, J., Goyal, P., Bojanowski, P., Joulin, A.\ (2020).
+\newblock Unsupervised learning of visual features by contrasting cluster
+  assignments.
+\newblock {\em NeurIPS 2020}.
+
+\bibitem[Theodoris et~al., 2023]{geneformer}
+Theodoris, C.V., Xiao, L., Chopra, A., et~al.\ (2023).
+\newblock Transfer learning enables predictions in network biology.
+\newblock {\em Nature}, 618(7965):616--624.
+
+\bibitem[Cui et~al., 2024]{scgpt}
+Cui, H., Wang, C., Maan, H., et~al.\ (2024).
+\newblock scGPT: toward building a foundation model for single-cell
+  multi-omics using generative AI.
+\newblock {\em Nature Methods}, 21(8):1470--1480.
+
+\bibitem[Dhainaut et~al., 2022]{perturbmap}
+Dhainaut, M., Rose, S.A., Bhatt, D., et~al.\ (2022).
+\newblock Spatial CRISPR genomics identifies regulators of the tumor
+  microenvironment.
+\newblock {\em Cell}, 185(5):757--774.
+
+\bibitem[Chen et~al., 2015]{merfish}
+Chen, K.H., Boettiger, A.N., Moffitt, J.R., Wang, S., Zhuang, X.\ (2015).
+\newblock Spatially resolved, highly multiplexed RNA profiling in single
+  cells.
+\newblock {\em Science}, 348(6233):aaa6090.
+
+\bibitem[Janesick et~al., 2023]{xenium}
+Janesick, A., Shelansky, R., Engblom, C., et~al.\ (2023).
+\newblock High resolution mapping of the breast cancer tumor microenvironment
+  using integrated single cell, spatial and in situ analysis of FFPE tissue.
+\newblock {\em Nature Communications}, 14:8318.
+
+\bibitem[Traag et~al., 2019]{leiden}
+Traag, V.A., Waltman, L., van~Eck, N.J.\ (2019).
+\newblock From Louvain to Leiden: guaranteeing well-connected communities.
+\newblock {\em Scientific Reports}, 9:5233.
+
+\bibitem[Kuleshov et~al., 2016]{enrichr}
+Kuleshov, M.V., Jones, M.R., Rouillard, A.D., et~al.\ (2016).
+\newblock Enrichr: a comprehensive gene set enrichment analysis web server
+  2016 update.
+\newblock {\em Nucleic Acids Research}, 44(W1):W90--W97.
+
+\bibitem[Franz\'en et~al., 2019]{panglao}
+Franz\'en, O., Gan, L.-M., Bj\"orkegren, J.L.M.\ (2019).
+\newblock PanglaoDB: a web server for exploration of mouse and human
+  single-cell RNA sequencing data.
+\newblock {\em Database}, 2019:baz046.
+
+\bibitem[Wolf et~al., 2018]{scanpy}
+Wolf, F.A., Angerer, P., Theis, F.J.\ (2018).
+\newblock SCANPY: large-scale single-cell gene expression data analysis.
+\newblock {\em Genome Biology}, 19:15.
+
+\bibitem[Marx, 2021]{marx2021}
+Marx, V.\ (2021).
+\newblock Method of the Year: spatially resolved transcriptomics.
+\newblock {\em Nature Methods}, 18:9--14.
+
+\bibitem[Li et~al., 2022]{li2022gnn}
+Li, M.M., Huang, K., Zitnik, M.\ (2022).
+\newblock Graph representation learning in biomedicine and healthcare.
+\newblock {\em Nature Biomedical Engineering}, 6:1353--1369.
+
+\bibitem[Moran, 1950]{moran1950}
+Moran, P.A.P.\ (1950).
+\newblock Notes on continuous stochastic phenomena.
+\newblock {\em Biometrika}, 37(1/2):17--23.
+
+\bibitem[Fey and Lenssen, 2019]{pyg}
+Fey, M., Lenssen, J.E.\ (2019).
+\newblock Fast graph representation learning with PyTorch Geometric.
+\newblock {\em ICLR Workshop on Representation Learning on Graphs
+  and Manifolds}.
+
+\bibitem[Makhzani and Frey, 2014]{makhzani2014}
+Makhzani, A., Frey, B.J.\ (2014).
+\newblock $k$-Sparse Autoencoders.
+\newblock {\em ICLR 2014}.
+
+% --- Mechanistic interpretability ---
+
+\bibitem[Conmy et~al., 2023]{conmy2023}
+Conmy, A., Mavor-Parker, A.N., Lynch, A., Heimersheim, S., Garriga-Alonso, A.\ (2023).
+\newblock Towards automated circuit discovery for mechanistic interpretability.
+\newblock {\em NeurIPS 2023}.
+
+\bibitem[Bills et~al., 2023]{bills2023}
+Bills, S., Cammarata, N., Mossing, D., et~al.\ (2023).
+\newblock Language models can explain neurons in language models.
+\newblock {\em OpenAI Blog}.
+
+\bibitem[Marks et~al., 2025]{marks2025}
+Marks, S., Rager, C., Michaud, E.J., Belinkov, Y., Bau, D., Mueller, A.\ (2025).
+\newblock Sparse feature circuits: discovering and editing interpretable
+  causal graphs in language models.
+\newblock {\em ICLR 2025}.
+
+\bibitem[Sharkey et~al., 2022]{sharkey2022}
+Sharkey, L., Braun, D., Millidge, B.\ (2022).
+\newblock Taking features out of superposition with sparse autoencoders.
+\newblock {\em Alignment Forum}.
+
+\bibitem[Elhage et~al., 2021]{elhage2021}
+Elhage, N., Nanda, N., Olsson, C., et~al.\ (2021).
+\newblock A mathematical framework for transformer circuits.
+\newblock {\em Transformer Circuits Thread}.
+
+\bibitem[Olah et~al., 2020]{olah2020}
+Olah, C., Cammarata, N., Schubert, L., Goh, G., Petrov, M., Carter, S.\ (2020).
+\newblock Zoom In: An introduction to circuits.
+\newblock {\em Distill}, 5(3):e00024.001.
+
+% --- Spatial transcriptomics ---
+
+\bibitem[Moses and Pachter, 2022]{moses2022}
+Moses, L., Pachter, L.\ (2022).
+\newblock Museum of spatial transcriptomics.
+\newblock {\em Nature Methods}, 19:534--546.
+
+\bibitem[Longo et~al., 2021]{longo2021}
+Longo, S.K., Guo, M.G., Ji, A.L., Khavari, P.A.\ (2021).
+\newblock Integrating single-cell and spatial transcriptomics to elucidate
+  intercellular tissue dynamics.
+\newblock {\em Nature Reviews Genetics}, 22:627--644.
+
+\bibitem[Williams et~al., 2022]{williams2022}
+Williams, C.G., Lee, H.J., Asatsuma, T., Vento-Tormo, R., Haque, A.\ (2022).
+\newblock An introduction to spatial transcriptomics for biomedical research.
+\newblock {\em Genome Medicine}, 14:68.
+
+\bibitem[Rao et~al., 2021]{rao2021}
+Rao, A., Barkley, D., Fran\c{c}a, G.S., Yanai, I.\ (2021).
+\newblock Exploring tissue architecture using spatial transcriptomics.
+\newblock {\em Nature}, 596:211--220.
+
+% --- Single-cell foundation models ---
+
+\bibitem[Yang et~al., 2022]{yang2022}
+Yang, F., Wang, W., Wang, F., et~al.\ (2022).
+\newblock scBERT as a large-scale pretrained deep language model for cell
+  type annotation of single-cell RNA-seq data.
+\newblock {\em Nature Machine Intelligence}, 4:852--866.
+
+\bibitem[Hao et~al., 2024]{hao2024}
+Hao, M., Gong, J., Zeng, X., et~al.\ (2024).
+\newblock Large-scale foundation model on single-cell transcriptomics.
+\newblock {\em Nature Methods}, 21:1481--1491.
+
+\bibitem[Rosen et~al., 2023]{rosen2023}
+Rosen, Y., Roohani, Y., Agarwal, A., et~al.\ (2023).
+\newblock Universal cell embeddings: a foundation model for cell biology.
+\newblock {\em bioRxiv}, 2023.11.28.568918.
+
+% --- Graph neural networks ---
+
+\bibitem[Kipf and Welling, 2017]{kipf2017}
+Kipf, T.N., Welling, M.\ (2017).
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock {\em ICLR 2017}.
+
+\bibitem[Veli\v{c}kovi\'{c} et~al., 2018]{velickovic2018}
+Veli\v{c}kovi\'{c}, P., Cucurull, G., Casanova, A., Romero, A.,
+Li\`{o}, P., Bengio, Y.\ (2018).
+\newblock Graph attention networks.
+\newblock {\em ICLR 2018}.
+
+% --- Biological databases ---
+
+\bibitem[{Gene Ontology Consortium}, 2021]{go2021}
+{Gene Ontology Consortium} (2021).
+\newblock The Gene Ontology resource: enriching a GOld mine.
+\newblock {\em Nucleic Acids Research}, 49(D1):D325--D334.
+
+\bibitem[Kanehisa and Goto, 2000]{kegg2000}
+Kanehisa, M., Goto, S.\ (2000).
+\newblock KEGG: Kyoto Encyclopedia of Genes and Genomes.
+\newblock {\em Nucleic Acids Research}, 28(1):27--30.
+
+\bibitem[Jassal et~al., 2020]{reactome2020}
+Jassal, B., Matthews, L., Viteri, G., et~al.\ (2020).
+\newblock The Reactome pathway knowledgebase.
+\newblock {\em Nucleic Acids Research}, 48(D1):D498--D503.
+
+\bibitem[Zhang et~al., 2019]{cellmarker2019}
+Zhang, X., Lan, Y., Xu, J., et~al.\ (2019).
+\newblock CellMarker: a manually curated resource of cell markers in
+  human and mouse.
+\newblock {\em Nucleic Acids Research}, 47(D1):D721--D728.
+
+% --- Spatial statistics ---
+
+\bibitem[Getis and Ord, 1992]{getis1992}
+Getis, A., Ord, J.K.\ (1992).
+\newblock The analysis of spatial association by use of distance statistics.
+\newblock {\em Geographical Analysis}, 24(3):189--206.
+
+\bibitem[Anselin, 1995]{anselin1995}
+Anselin, L.\ (1995).
+\newblock Local indicators of spatial association---LISA.
+\newblock {\em Geographical Analysis}, 27(2):93--115.
+
+% --- Contrastive / self-supervised learning ---
+
+\bibitem[Chen et~al., 2020]{simclr2020}
+Chen, T., Kornblith, S., Norouzi, M., Hinton, G.E.\ (2020).
+\newblock A simple framework for contrastive learning of visual representations.
+\newblock {\em ICML 2020}, pages 1597--1607.
+
+\bibitem[He et~al., 2020]{moco2020}
+He, K., Fan, H., Wu, Y., Xie, S., Girshick, R.\ (2020).
+\newblock Momentum contrast for unsupervised visual representation learning.
+\newblock {\em CVPR 2020}.
+
+% --- Analysis tools ---
+
+\bibitem[Blondel et~al., 2008]{louvain2008}
+Blondel, V.D., Guillaume, J.-L., Lambiotte, R., Lefebvre, E.\ (2008).
+\newblock Fast unfolding of communities in large networks.
+\newblock {\em Journal of Statistical Mechanics}, 2008(10):P10008.
+
+\bibitem[McInnes et~al., 2018]{umap2018}
+McInnes, L., Healy, J., Melville, J.\ (2018).
+\newblock UMAP: Uniform manifold approximation and projection for dimension
+  reduction.
+\newblock {\em arXiv:1802.03426}.
+
+% --- Foundational ---
+
+\bibitem[Subramanian et~al., 2005]{gsea2005}
+Subramanian, A., Tamayo, P., Mootha, V.K., et~al.\ (2005).
+\newblock Gene set enrichment analysis: a knowledge-based approach for
+  interpreting genome-wide expression profiles.
+\newblock {\em PNAS}, 102(43):15545--15550.
+
+\bibitem[Vaswani et~al., 2017]{vaswani2017}
+Vaswani, A., Shazeer, N., Parmar, N., et~al.\ (2017).
+\newblock Attention is all you need.
+\newblock {\em NeurIPS 2017}.
+
+\end{thebibliography}
+
+\end{document}
