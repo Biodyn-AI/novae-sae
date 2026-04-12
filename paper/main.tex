@@ -770,16 +770,6 @@ identical cell populations. The causal relationship captures a
 \emph{computational} dependency (ablating one changes the other) that
 goes beyond simple co-occurrence.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.45\textwidth]{figures/fig10_pmi_causal.pdf}
-\caption{\textbf{PMI validation of circuit edges.} Causal edges
-co-activate far more than random pairs ($p = 5.8 \times 10^{-220}$),
-but with near-zero PMI, indicating the causal link is not reducible
-to co-occurrence.}
-\label{fig:pmi}
-\end{figure}
-
 \subsection{Spatial gradient steering: a novel experiment}
 
 As a contribution unique to the spatial setting, we test whether
@@ -999,43 +989,33 @@ The SAE methodology follows the pipeline established in
 \bibliographystyle{apalike}
 \begin{thebibliography}{99}
 
+\bibitem[Anselin, 1995]{anselin1995}
+Anselin, L.\ (1995).
+\newblock Local indicators of spatial association---LISA.
+\newblock {\em Geographical Analysis}, 27(2):93--115.
+
+% --- Contrastive / self-supervised learning ---
+
+\bibitem[Bills et~al., 2023]{bills2023}
+Bills, S., Cammarata, N., Mossing, D., et~al.\ (2023).
+\newblock Language models can explain neurons in language models.
+\newblock {\em OpenAI Blog}.
+
 \bibitem[Blampey et~al., 2025]{novae}
 Blampey, Q., Benkirane, H., Bercovici, N., et~al.\ (2025).
 \newblock Novae: a graph foundation model for spatial omics.
 \newblock {\em Nature Methods}, s41592-025-02899-6.
 
-\bibitem[Kendiukhov, 2026]{sae_atlas}
-Kendiukhov, I.\ (2026).
-\newblock Sparse autoencoder atlases for single-cell foundation models.
-\newblock {\em arXiv:2603.02952}.
-
-\bibitem[Cunningham et~al., 2024]{cunningham2023}
-Cunningham, H., Ewart, A., Riggs, L., Huben, R., Sharkey, L.\ (2024).
-\newblock Sparse autoencoders find highly interpretable features in
-  language models.
-\newblock {\em arXiv:2309.08600}.
+\bibitem[Blondel et~al., 2008]{louvain2008}
+Blondel, V.D., Guillaume, J.-L., Lambiotte, R., Lefebvre, E.\ (2008).
+\newblock Fast unfolding of communities in large networks.
+\newblock {\em Journal of Statistical Mechanics}, 2008(10):P10008.
 
 \bibitem[Bricken et~al., 2023]{bricken2023}
 Bricken, T., Templeton, A., Batson, J., et~al.\ (2023).
 \newblock Towards monosemanticity: Decomposing language models with
   dictionary learning.
 \newblock {\em Anthropic Research}.
-
-\bibitem[Templeton et~al., 2024]{templeton2024}
-Templeton, A., Conerly, T., Marcus, J., et~al.\ (2024).
-\newblock Scaling monosemanticity: Extracting interpretable features
-  from Claude 3 Sonnet.
-\newblock {\em Anthropic Research}.
-
-\bibitem[Gao et~al., 2024]{gao2024}
-Gao, L., la~Tour, T.D., Tillman, H., Goh, G., Troll, R., et~al.\ (2024).
-\newblock Scaling and evaluating sparse autoencoders.
-\newblock {\em arXiv:2406.04093}.
-
-\bibitem[Elhage et~al., 2022]{elhage2022superposition}
-Elhage, N., Hume, T., Olsson, C., et~al.\ (2022).
-\newblock Toy models of superposition.
-\newblock {\em arXiv:2209.10652}.
 
 \bibitem[Brody et~al., 2022]{gatv2}
 Brody, S., Alon, U., Yahav, E.\ (2022).
@@ -1048,10 +1028,21 @@ Caron, M., Misra, I., Mairal, J., Goyal, P., Bojanowski, P., Joulin, A.\ (2020).
   assignments.
 \newblock {\em NeurIPS 2020}.
 
-\bibitem[Theodoris et~al., 2023]{geneformer}
-Theodoris, C.V., Xiao, L., Chopra, A., et~al.\ (2023).
-\newblock Transfer learning enables predictions in network biology.
-\newblock {\em Nature}, 618(7965):616--624.
+\bibitem[Chen et~al., 2015]{merfish}
+Chen, K.H., Boettiger, A.N., Moffitt, J.R., Wang, S., Zhuang, X.\ (2015).
+\newblock Spatially resolved, highly multiplexed RNA profiling in single
+  cells.
+\newblock {\em Science}, 348(6233):aaa6090.
+
+\bibitem[Chen et~al., 2020]{simclr2020}
+Chen, T., Kornblith, S., Norouzi, M., Hinton, G.E.\ (2020).
+\newblock A simple framework for contrastive learning of visual representations.
+\newblock {\em ICML 2020}, pages 1597--1607.
+
+\bibitem[Conmy et~al., 2023]{conmy2023}
+Conmy, A., Mavor-Parker, A.N., Lynch, A., Heimersheim, S., Garriga-Alonso, A.\ (2023).
+\newblock Towards automated circuit discovery for mechanistic interpretability.
+\newblock {\em NeurIPS 2023}.
 
 \bibitem[Cui et~al., 2024]{scgpt}
 Cui, H., Wang, C., Maan, H., et~al.\ (2024).
@@ -1059,60 +1050,27 @@ Cui, H., Wang, C., Maan, H., et~al.\ (2024).
   multi-omics using generative AI.
 \newblock {\em Nature Methods}, 21(8):1470--1480.
 
+\bibitem[Cunningham et~al., 2024]{cunningham2023}
+Cunningham, H., Ewart, A., Riggs, L., Huben, R., Sharkey, L.\ (2024).
+\newblock Sparse autoencoders find highly interpretable features in
+  language models.
+\newblock {\em arXiv:2309.08600}.
+
 \bibitem[Dhainaut et~al., 2022]{perturbmap}
 Dhainaut, M., Rose, S.A., Bhatt, D., et~al.\ (2022).
 \newblock Spatial CRISPR genomics identifies regulators of the tumor
   microenvironment.
 \newblock {\em Cell}, 185(5):757--774.
 
-\bibitem[Chen et~al., 2015]{merfish}
-Chen, K.H., Boettiger, A.N., Moffitt, J.R., Wang, S., Zhuang, X.\ (2015).
-\newblock Spatially resolved, highly multiplexed RNA profiling in single
-  cells.
-\newblock {\em Science}, 348(6233):aaa6090.
+\bibitem[Elhage et~al., 2022]{elhage2022superposition}
+Elhage, N., Hume, T., Olsson, C., et~al.\ (2022).
+\newblock Toy models of superposition.
+\newblock {\em arXiv:2209.10652}.
 
-\bibitem[Janesick et~al., 2023]{xenium}
-Janesick, A., Shelansky, R., Engblom, C., et~al.\ (2023).
-\newblock High resolution mapping of the breast cancer tumor microenvironment
-  using integrated single cell, spatial and in situ analysis of FFPE tissue.
-\newblock {\em Nature Communications}, 14:8318.
-
-\bibitem[Traag et~al., 2019]{leiden}
-Traag, V.A., Waltman, L., van~Eck, N.J.\ (2019).
-\newblock From Louvain to Leiden: guaranteeing well-connected communities.
-\newblock {\em Scientific Reports}, 9:5233.
-
-\bibitem[Kuleshov et~al., 2016]{enrichr}
-Kuleshov, M.V., Jones, M.R., Rouillard, A.D., et~al.\ (2016).
-\newblock Enrichr: a comprehensive gene set enrichment analysis web server
-  2016 update.
-\newblock {\em Nucleic Acids Research}, 44(W1):W90--W97.
-
-\bibitem[Franz\'en et~al., 2019]{panglao}
-Franz\'en, O., Gan, L.-M., Bj\"orkegren, J.L.M.\ (2019).
-\newblock PanglaoDB: a web server for exploration of mouse and human
-  single-cell RNA sequencing data.
-\newblock {\em Database}, 2019:baz046.
-
-\bibitem[Wolf et~al., 2018]{scanpy}
-Wolf, F.A., Angerer, P., Theis, F.J.\ (2018).
-\newblock SCANPY: large-scale single-cell gene expression data analysis.
-\newblock {\em Genome Biology}, 19:15.
-
-\bibitem[Marx, 2021]{marx2021}
-Marx, V.\ (2021).
-\newblock Method of the Year: spatially resolved transcriptomics.
-\newblock {\em Nature Methods}, 18:9--14.
-
-\bibitem[Li et~al., 2022]{li2022gnn}
-Li, M.M., Huang, K., Zitnik, M.\ (2022).
-\newblock Graph representation learning in biomedicine and healthcare.
-\newblock {\em Nature Biomedical Engineering}, 6:1353--1369.
-
-\bibitem[Moran, 1950]{moran1950}
-Moran, P.A.P.\ (1950).
-\newblock Notes on continuous stochastic phenomena.
-\newblock {\em Biometrika}, 37(1/2):17--23.
+\bibitem[Elhage et~al., 2021]{elhage2021}
+Elhage, N., Nanda, N., Olsson, C., et~al.\ (2021).
+\newblock A mathematical framework for transformer circuits.
+\newblock {\em Transformer Circuits Thread}.
 
 \bibitem[Fey and Lenssen, 2019]{pyg}
 Fey, M., Lenssen, J.E.\ (2019).
@@ -1120,139 +1078,31 @@ Fey, M., Lenssen, J.E.\ (2019).
 \newblock {\em ICLR Workshop on Representation Learning on Graphs
   and Manifolds}.
 
-\bibitem[Makhzani and Frey, 2014]{makhzani2014}
-Makhzani, A., Frey, B.J.\ (2014).
-\newblock $k$-Sparse Autoencoders.
-\newblock {\em ICLR 2014}.
+\bibitem[Franz\'en et~al., 2019]{panglao}
+Franz\'en, O., Gan, L.-M., Bj\"orkegren, J.L.M.\ (2019).
+\newblock PanglaoDB: a web server for exploration of mouse and human
+  single-cell RNA sequencing data.
+\newblock {\em Database}, 2019:baz046.
 
-% --- Mechanistic interpretability ---
-
-\bibitem[Conmy et~al., 2023]{conmy2023}
-Conmy, A., Mavor-Parker, A.N., Lynch, A., Heimersheim, S., Garriga-Alonso, A.\ (2023).
-\newblock Towards automated circuit discovery for mechanistic interpretability.
-\newblock {\em NeurIPS 2023}.
-
-\bibitem[Bills et~al., 2023]{bills2023}
-Bills, S., Cammarata, N., Mossing, D., et~al.\ (2023).
-\newblock Language models can explain neurons in language models.
-\newblock {\em OpenAI Blog}.
-
-\bibitem[Marks et~al., 2025]{marks2025}
-Marks, S., Rager, C., Michaud, E.J., Belinkov, Y., Bau, D., Mueller, A.\ (2025).
-\newblock Sparse feature circuits: discovering and editing interpretable
-  causal graphs in language models.
-\newblock {\em ICLR 2025}.
-
-\bibitem[Sharkey et~al., 2022]{sharkey2022}
-Sharkey, L., Braun, D., Millidge, B.\ (2022).
-\newblock Taking features out of superposition with sparse autoencoders.
-\newblock {\em Alignment Forum}.
-
-\bibitem[Elhage et~al., 2021]{elhage2021}
-Elhage, N., Nanda, N., Olsson, C., et~al.\ (2021).
-\newblock A mathematical framework for transformer circuits.
-\newblock {\em Transformer Circuits Thread}.
-
-\bibitem[Olah et~al., 2020]{olah2020}
-Olah, C., Cammarata, N., Schubert, L., Goh, G., Petrov, M., Carter, S.\ (2020).
-\newblock Zoom In: An introduction to circuits.
-\newblock {\em Distill}, 5(3):e00024.001.
-
-% --- Spatial transcriptomics ---
-
-\bibitem[Moses and Pachter, 2022]{moses2022}
-Moses, L., Pachter, L.\ (2022).
-\newblock Museum of spatial transcriptomics.
-\newblock {\em Nature Methods}, 19:534--546.
-
-\bibitem[Longo et~al., 2021]{longo2021}
-Longo, S.K., Guo, M.G., Ji, A.L., Khavari, P.A.\ (2021).
-\newblock Integrating single-cell and spatial transcriptomics to elucidate
-  intercellular tissue dynamics.
-\newblock {\em Nature Reviews Genetics}, 22:627--644.
-
-\bibitem[Williams et~al., 2022]{williams2022}
-Williams, C.G., Lee, H.J., Asatsuma, T., Vento-Tormo, R., Haque, A.\ (2022).
-\newblock An introduction to spatial transcriptomics for biomedical research.
-\newblock {\em Genome Medicine}, 14:68.
-
-\bibitem[Rao et~al., 2021]{rao2021}
-Rao, A., Barkley, D., Fran\c{c}a, G.S., Yanai, I.\ (2021).
-\newblock Exploring tissue architecture using spatial transcriptomics.
-\newblock {\em Nature}, 596:211--220.
-
-% --- Single-cell foundation models ---
-
-\bibitem[Yang et~al., 2022]{yang2022}
-Yang, F., Wang, W., Wang, F., et~al.\ (2022).
-\newblock scBERT as a large-scale pretrained deep language model for cell
-  type annotation of single-cell RNA-seq data.
-\newblock {\em Nature Machine Intelligence}, 4:852--866.
-
-\bibitem[Hao et~al., 2024]{hao2024}
-Hao, M., Gong, J., Zeng, X., et~al.\ (2024).
-\newblock Large-scale foundation model on single-cell transcriptomics.
-\newblock {\em Nature Methods}, 21:1481--1491.
-
-\bibitem[Rosen et~al., 2023]{rosen2023}
-Rosen, Y., Roohani, Y., Agarwal, A., et~al.\ (2023).
-\newblock Universal cell embeddings: a foundation model for cell biology.
-\newblock {\em bioRxiv}, 2023.11.28.568918.
-
-% --- Graph neural networks ---
-
-\bibitem[Kipf and Welling, 2017]{kipf2017}
-Kipf, T.N., Welling, M.\ (2017).
-\newblock Semi-supervised classification with graph convolutional networks.
-\newblock {\em ICLR 2017}.
-
-\bibitem[Veli\v{c}kovi\'{c} et~al., 2018]{velickovic2018}
-Veli\v{c}kovi\'{c}, P., Cucurull, G., Casanova, A., Romero, A.,
-Li\`{o}, P., Bengio, Y.\ (2018).
-\newblock Graph attention networks.
-\newblock {\em ICLR 2018}.
-
-% --- Biological databases ---
+\bibitem[Gao et~al., 2024]{gao2024}
+Gao, L., la~Tour, T.D., Tillman, H., Goh, G., Troll, R., et~al.\ (2024).
+\newblock Scaling and evaluating sparse autoencoders.
+\newblock {\em arXiv:2406.04093}.
 
 \bibitem[{Gene Ontology Consortium}, 2021]{go2021}
 {Gene Ontology Consortium} (2021).
 \newblock The Gene Ontology resource: enriching a GOld mine.
 \newblock {\em Nucleic Acids Research}, 49(D1):D325--D334.
 
-\bibitem[Kanehisa and Goto, 2000]{kegg2000}
-Kanehisa, M., Goto, S.\ (2000).
-\newblock KEGG: Kyoto Encyclopedia of Genes and Genomes.
-\newblock {\em Nucleic Acids Research}, 28(1):27--30.
-
-\bibitem[Jassal et~al., 2020]{reactome2020}
-Jassal, B., Matthews, L., Viteri, G., et~al.\ (2020).
-\newblock The Reactome pathway knowledgebase.
-\newblock {\em Nucleic Acids Research}, 48(D1):D498--D503.
-
-\bibitem[Zhang et~al., 2019]{cellmarker2019}
-Zhang, X., Lan, Y., Xu, J., et~al.\ (2019).
-\newblock CellMarker: a manually curated resource of cell markers in
-  human and mouse.
-\newblock {\em Nucleic Acids Research}, 47(D1):D721--D728.
-
-% --- Spatial statistics ---
-
 \bibitem[Getis and Ord, 1992]{getis1992}
 Getis, A., Ord, J.K.\ (1992).
 \newblock The analysis of spatial association by use of distance statistics.
 \newblock {\em Geographical Analysis}, 24(3):189--206.
 
-\bibitem[Anselin, 1995]{anselin1995}
-Anselin, L.\ (1995).
-\newblock Local indicators of spatial association---LISA.
-\newblock {\em Geographical Analysis}, 27(2):93--115.
-
-% --- Contrastive / self-supervised learning ---
-
-\bibitem[Chen et~al., 2020]{simclr2020}
-Chen, T., Kornblith, S., Norouzi, M., Hinton, G.E.\ (2020).
-\newblock A simple framework for contrastive learning of visual representations.
-\newblock {\em ICML 2020}, pages 1597--1607.
+\bibitem[Hao et~al., 2024]{hao2024}
+Hao, M., Gong, J., Zeng, X., et~al.\ (2024).
+\newblock Large-scale foundation model on single-cell transcriptomics.
+\newblock {\em Nature Methods}, 21:1481--1491.
 
 \bibitem[He et~al., 2020]{moco2020}
 He, K., Fan, H., Wu, Y., Xie, S., Girshick, R.\ (2020).
@@ -1261,10 +1111,66 @@ He, K., Fan, H., Wu, Y., Xie, S., Girshick, R.\ (2020).
 
 % --- Analysis tools ---
 
-\bibitem[Blondel et~al., 2008]{louvain2008}
-Blondel, V.D., Guillaume, J.-L., Lambiotte, R., Lefebvre, E.\ (2008).
-\newblock Fast unfolding of communities in large networks.
-\newblock {\em Journal of Statistical Mechanics}, 2008(10):P10008.
+\bibitem[Janesick et~al., 2023]{xenium}
+Janesick, A., Shelansky, R., Engblom, C., et~al.\ (2023).
+\newblock High resolution mapping of the breast cancer tumor microenvironment
+  using integrated single cell, spatial and in situ analysis of FFPE tissue.
+\newblock {\em Nature Communications}, 14:8318.
+
+\bibitem[Jassal et~al., 2020]{reactome2020}
+Jassal, B., Matthews, L., Viteri, G., et~al.\ (2020).
+\newblock The Reactome pathway knowledgebase.
+\newblock {\em Nucleic Acids Research}, 48(D1):D498--D503.
+
+\bibitem[Kanehisa and Goto, 2000]{kegg2000}
+Kanehisa, M., Goto, S.\ (2000).
+\newblock KEGG: Kyoto Encyclopedia of Genes and Genomes.
+\newblock {\em Nucleic Acids Research}, 28(1):27--30.
+
+\bibitem[Kendiukhov, 2026]{sae_atlas}
+Kendiukhov, I.\ (2026).
+\newblock Sparse autoencoder atlases for single-cell foundation models.
+\newblock {\em arXiv:2603.02952}.
+
+\bibitem[Kipf and Welling, 2017]{kipf2017}
+Kipf, T.N., Welling, M.\ (2017).
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock {\em ICLR 2017}.
+
+\bibitem[Kuleshov et~al., 2016]{enrichr}
+Kuleshov, M.V., Jones, M.R., Rouillard, A.D., et~al.\ (2016).
+\newblock Enrichr: a comprehensive gene set enrichment analysis web server
+  2016 update.
+\newblock {\em Nucleic Acids Research}, 44(W1):W90--W97.
+
+\bibitem[Li et~al., 2022]{li2022gnn}
+Li, M.M., Huang, K., Zitnik, M.\ (2022).
+\newblock Graph representation learning in biomedicine and healthcare.
+\newblock {\em Nature Biomedical Engineering}, 6:1353--1369.
+
+\bibitem[Longo et~al., 2021]{longo2021}
+Longo, S.K., Guo, M.G., Ji, A.L., Khavari, P.A.\ (2021).
+\newblock Integrating single-cell and spatial transcriptomics to elucidate
+  intercellular tissue dynamics.
+\newblock {\em Nature Reviews Genetics}, 22:627--644.
+
+\bibitem[Makhzani and Frey, 2014]{makhzani2014}
+Makhzani, A., Frey, B.J.\ (2014).
+\newblock $k$-Sparse Autoencoders.
+\newblock {\em ICLR 2014}.
+
+% --- Mechanistic interpretability ---
+
+\bibitem[Marks et~al., 2025]{marks2025}
+Marks, S., Rager, C., Michaud, E.J., Belinkov, Y., Bau, D., Mueller, A.\ (2025).
+\newblock Sparse feature circuits: discovering and editing interpretable
+  causal graphs in language models.
+\newblock {\em ICLR 2025}.
+
+\bibitem[Marx, 2021]{marx2021}
+Marx, V.\ (2021).
+\newblock Method of the Year: spatially resolved transcriptomics.
+\newblock {\em Nature Methods}, 18:9--14.
 
 \bibitem[McInnes et~al., 2018]{umap2018}
 McInnes, L., Healy, J., Melville, J.\ (2018).
@@ -1274,16 +1180,100 @@ McInnes, L., Healy, J., Melville, J.\ (2018).
 
 % --- Foundational ---
 
+\bibitem[Moran, 1950]{moran1950}
+Moran, P.A.P.\ (1950).
+\newblock Notes on continuous stochastic phenomena.
+\newblock {\em Biometrika}, 37(1/2):17--23.
+
+\bibitem[Moses and Pachter, 2022]{moses2022}
+Moses, L., Pachter, L.\ (2022).
+\newblock Museum of spatial transcriptomics.
+\newblock {\em Nature Methods}, 19:534--546.
+
+\bibitem[Olah et~al., 2020]{olah2020}
+Olah, C., Cammarata, N., Schubert, L., Goh, G., Petrov, M., Carter, S.\ (2020).
+\newblock Zoom In: An introduction to circuits.
+\newblock {\em Distill}, 5(3):e00024.001.
+
+% --- Spatial transcriptomics ---
+
+\bibitem[Rao et~al., 2021]{rao2021}
+Rao, A., Barkley, D., Fran\c{c}a, G.S., Yanai, I.\ (2021).
+\newblock Exploring tissue architecture using spatial transcriptomics.
+\newblock {\em Nature}, 596:211--220.
+
+% --- Single-cell foundation models ---
+
+\bibitem[Rosen et~al., 2023]{rosen2023}
+Rosen, Y., Roohani, Y., Agarwal, A., et~al.\ (2023).
+\newblock Universal cell embeddings: a foundation model for cell biology.
+\newblock {\em bioRxiv}, 2023.11.28.568918.
+
+% --- Graph neural networks ---
+
+\bibitem[Sharkey et~al., 2022]{sharkey2022}
+Sharkey, L., Braun, D., Millidge, B.\ (2022).
+\newblock Taking features out of superposition with sparse autoencoders.
+\newblock {\em Alignment Forum}.
+
 \bibitem[Subramanian et~al., 2005]{gsea2005}
 Subramanian, A., Tamayo, P., Mootha, V.K., et~al.\ (2005).
 \newblock Gene set enrichment analysis: a knowledge-based approach for
   interpreting genome-wide expression profiles.
 \newblock {\em PNAS}, 102(43):15545--15550.
 
+\bibitem[Templeton et~al., 2024]{templeton2024}
+Templeton, A., Conerly, T., Marcus, J., et~al.\ (2024).
+\newblock Scaling monosemanticity: Extracting interpretable features
+  from Claude 3 Sonnet.
+\newblock {\em Anthropic Research}.
+
+\bibitem[Theodoris et~al., 2023]{geneformer}
+Theodoris, C.V., Xiao, L., Chopra, A., et~al.\ (2023).
+\newblock Transfer learning enables predictions in network biology.
+\newblock {\em Nature}, 618(7965):616--624.
+
+\bibitem[Traag et~al., 2019]{leiden}
+Traag, V.A., Waltman, L., van~Eck, N.J.\ (2019).
+\newblock From Louvain to Leiden: guaranteeing well-connected communities.
+\newblock {\em Scientific Reports}, 9:5233.
+
 \bibitem[Vaswani et~al., 2017]{vaswani2017}
 Vaswani, A., Shazeer, N., Parmar, N., et~al.\ (2017).
 \newblock Attention is all you need.
 \newblock {\em NeurIPS 2017}.
+
+\bibitem[Veli\v{c}kovi\'{c} et~al., 2018]{velickovic2018}
+Veli\v{c}kovi\'{c}, P., Cucurull, G., Casanova, A., Romero, A.,
+Li\`{o}, P., Bengio, Y.\ (2018).
+\newblock Graph attention networks.
+\newblock {\em ICLR 2018}.
+
+% --- Biological databases ---
+
+\bibitem[Williams et~al., 2022]{williams2022}
+Williams, C.G., Lee, H.J., Asatsuma, T., Vento-Tormo, R., Haque, A.\ (2022).
+\newblock An introduction to spatial transcriptomics for biomedical research.
+\newblock {\em Genome Medicine}, 14:68.
+
+\bibitem[Wolf et~al., 2018]{scanpy}
+Wolf, F.A., Angerer, P., Theis, F.J.\ (2018).
+\newblock SCANPY: large-scale single-cell gene expression data analysis.
+\newblock {\em Genome Biology}, 19:15.
+
+\bibitem[Yang et~al., 2022]{yang2022}
+Yang, F., Wang, W., Wang, F., et~al.\ (2022).
+\newblock scBERT as a large-scale pretrained deep language model for cell
+  type annotation of single-cell RNA-seq data.
+\newblock {\em Nature Machine Intelligence}, 4:852--866.
+
+\bibitem[Zhang et~al., 2019]{cellmarker2019}
+Zhang, X., Lan, Y., Xu, J., et~al.\ (2019).
+\newblock CellMarker: a manually curated resource of cell markers in
+  human and mouse.
+\newblock {\em Nucleic Acids Research}, 47(D1):D721--D728.
+
+% --- Spatial statistics ---
 
 \end{thebibliography}
 
