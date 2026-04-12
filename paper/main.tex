@@ -956,9 +956,38 @@ compressibility, more reuse of earlier patterns).
 
 \section*{Data and code availability}
 
-Interactive atlas: \url{https://biodyn-ai.github.io/novae-atlas/}.\\
-Code: \url{https://github.com/Biodyn-AI/novae-atlas}.\\
-Analysis scripts: \texttt{scripts/01--18*.py} in the project repository.
+\paragraph{Code.}
+The complete analysis codebase (39 scripts, TopK SAE module, paper
+source) is available at
+\url{https://github.com/Biodyn-AI/novae-sae}. The interactive atlas
+frontend is at \url{https://github.com/Biodyn-AI/novae-atlas}, deployed
+at \url{https://biodyn-ai.github.io/novae-atlas/}.
+
+\paragraph{Model checkpoints.}
+Novae checkpoints are available from
+HuggingFace: \texttt{MICS-Lab/novae-human-0},
+\texttt{MICS-Lab/novae-mouse-0}, and \texttt{MICS-Lab/novae-brain-0}
+\citep{novae}.
+
+\paragraph{Spatial transcriptomics data.}
+The activation corpus uses 15 human tissue slides (4{,}525{,}753 cells)
+from the MICS-Lab/novae HuggingFace dataset
+(\url{https://huggingface.co/datasets/MICS-Lab/novae}), spanning 13
+Xenium \citep{xenium}, 1 MERSCOPE \citep{merfish}, and 1 CosMx slides.
+Cross-technology coherence uses 7 additional MERSCOPE slides from the
+same dataset. Per-layer analysis uses 3 additional mouse slides (brain,
+colon).
+
+\paragraph{Perturbation data.}
+The Perturb-map spatial CRISPR screen \citep{perturbmap} (4 mouse lung
+Visium sections) was obtained from GEO accession GSE193460.
+
+\paragraph{Enrichment databases.}
+Gene set enrichment uses locally cached libraries from Enrichr
+\citep{enrichr}: GO Biological Process 2023 \citep{go2021}, KEGG 2021
+\citep{kegg2000}, Reactome 2022 \citep{reactome2020}, PanglaoDB
+Augmented 2021 \citep{panglao}, and CellMarker Augmented 2021
+\citep{cellmarker2019}.
 
 \section*{Acknowledgments}
 
