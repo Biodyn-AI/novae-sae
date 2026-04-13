@@ -117,7 +117,7 @@ about the model's representations. The key question is: \emph{does
 Novae's spatial graph architecture produce representations that are
 qualitatively different from cell-identity-only models?} Our graph-ablation
 experiment (H8), spatial-coherence analysis (H7), and cross-technology
-coherence (cross-tech) are uniquely enabled by the spatial setting and
+coherence are uniquely enabled by the spatial setting and
 could not be performed on non-spatial models like Geneformer.
 Beyond hypothesis testing, we perform causal circuit tracing---zeroing
 individual features and measuring their downstream effects across GATv2
@@ -290,6 +290,39 @@ with the top-50 SVD axes, confirming that Novae uses \emph{superposition}:
 it packs many more concepts into its 64-dimensional aggregator than a
 linear decomposition could recover.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig2_hypotheses.pdf}
+\caption{\textbf{Preregistered hypothesis verdicts.} Green bars =
+confirmed; red bars = refuted. Dashed lines show preregistered
+thresholds. See Table~\ref{tab:hypotheses} for details.}
+\label{fig:hypotheses}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{Summary of preregistered hypotheses.}
+\label{tab:hypotheses}
+\small
+\begin{tabular}{clccc}
+\toprule
+\# & Hypothesis & Threshold & Result & Verdict \\
+\midrule
+H1 & Annotation rate $\geq$30\% & 30\% & 100\% & \textcolor{confirmed}{Confirmed} \\
+H2 & $<$20\% survive confounds & 20\% & 62\% & \textcolor{refuted}{Refuted} \\
+H3 & $\geq$95\% in superposition & 95\% & 99.4--100\% & \textcolor{confirmed}{Confirmed} \\
+H4 & Depth-dependent annotation & U-shape & 91--100\% & \textcolor{refuted}{Refuted} \\
+H5 & Cross-checkpoint convergence & CCA $r>0.5$ & $\rho \approx 0$ & \textcolor{refuted}{Refuted} \\
+H6 & $<$30\% prototype-aligned & 30\% & 0.0\% & \textcolor{confirmed}{Confirmed} \\
+H7a & Moran's $I > 0$ & $>$0 & 0.122 & \textcolor{confirmed}{Confirmed} \\
+H7b & $I$ increases with depth & Increase & Decrease & \textcolor{refuted}{Refuted} \\
+H8 & $>$20\% context-dependent & 20\% & 67.2\% & \textcolor{confirmed}{Confirmed} \\
+H9 & $\geq$5\% tech-specific & 5\% & 0.95\% & \textcolor{refuted}{Refuted} \\
+H10 & Composition $\uparrow$ depth & Increase & Increase & \textcolor{confirmed}{Supported} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Every feature is biologically meaningful}
 
 100\% of aggregator features carry at least one significant Enrichr
@@ -299,15 +332,24 @@ representative GATv2 layers are uniformly high: conv\_0 (100\%), conv\_3
 preregistered 30\% threshold by a wide margin at every layer, refuting
 the H4 prediction of U-shaped depth dependence in annotation rate.
 The SAE dictionary is not recovering noise---every feature at every
-depth corresponds to a recognizable biological program.
+depth corresponds to a recognizable biological program
+(Figure~\ref{fig:annotation_rate}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/fig11_annotation_rate.pdf}
+\caption{\textbf{Annotation rate is uniformly high across all layers (H1/H4).}
+No U-shaped depth dependence---every layer is fully annotatable.}
+\label{fig:annotation_rate}
+\end{figure}
 
 Representative features illustrate the diversity of concepts encoded:
 
 \begin{itemize}
 \item \textbf{Feature 1771 (Goblet Cells)} concentrates 76\% of its
       top cells in colon tissue with 93\% niche specificity. Its top
-      genes---\emph{duox2}, \emph{tff1}, \emph{guca2a}, \emph{guca2b},
-      \emph{otop2}---are canonical markers of intestinal secretory
+      genes---\emph{DUOX2}, \emph{TFF1}, \emph{GUCA2A}, \emph{GUCA2B},
+      \emph{OTOP2}---are canonical markers of intestinal secretory
       epithelium. \emph{Duox2} generates reactive oxygen species for
       antimicrobial defense; the \emph{guca2a/b} guanylins regulate
       fluid secretion via cGMP signaling. This feature captures the
@@ -316,14 +358,14 @@ Representative features illustrate the diversity of concepts encoded:
 
 \item \textbf{Feature 208 (Luminal Epithelial Cells)} is 99\% breast-specific
       and sits in a single Novae niche (90\% enrichment). Its genes
-      (\emph{muc6}, \emph{lypd3}, \emph{ceacam6}) mark the luminal
+      (\emph{MUC6}, \emph{LYPD3}, \emph{CEACAM6}) mark the luminal
       compartment of breast ducts. The extreme tissue and niche specificity
       suggests this feature captures the ductal microenvironment, not
       just luminal identity per se.
 
 \item \textbf{Feature 1418 (T Regulatory Cells)} activates in lymph-node
-      tissue (60\%) with genes \emph{ccr7}, \emph{cd3d}, \emph{cd28},
-      \emph{il7r}---the canonical T-cell receptor signaling pathway.
+      tissue (60\%) with genes \emph{CCR7}, \emph{CD3D}, \emph{CD28},
+      \emph{IL7R}---the canonical T-cell receptor signaling pathway.
       Its Moran's $I = 0.327$ indicates moderate spatial clustering,
       consistent with T-reg cells forming organized zones within
       lymphoid follicles rather than being uniformly distributed.
@@ -482,14 +524,6 @@ The full 4-level hierarchical gate (adding degree-preserving graph
 rewire from the graph ablation v2 analysis) passes \textbf{39.7\%}
 of all 2{,}048 features; 79.1\% pass at least 3 of 4 controls.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.5\textwidth]{figures/fig11_annotation_rate.pdf}
-\caption{\textbf{Annotation rate is uniformly high across all layers (H1/H4).}
-No U-shaped depth dependence---every layer is fully annotatable.}
-\label{fig:annotation_rate}
-\end{figure}
-
 A permutation null (30 random domain-label shuffles per feature)
 independently validates the enrichments: \textbf{74.6\%} of features
 have domain enrichment significantly above the shuffle null ($p <
@@ -535,40 +569,6 @@ responding SAE feature---including CRISPR-targeted genes like
 (up to 28 features per lesion). This demonstrates that SAE features
 capture perturbation-level variation even on coarse Visium data
 ($\sim$55\,$\mu$m spots).
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig2_hypotheses.pdf}
-\caption{\textbf{Preregistered hypothesis verdicts.} Green bars =
-confirmed; red bars = refuted. Dashed lines show preregistered
-thresholds.}
-\label{fig:hypotheses}
-\end{figure}
-
-% ===================== HYPOTHESIS TABLE =====================
-\begin{table}[h]
-\centering
-\caption{Summary of preregistered hypotheses.}
-\label{tab:hypotheses}
-\small
-\begin{tabular}{clccc}
-\toprule
-\# & Hypothesis & Threshold & Result & Verdict \\
-\midrule
-H1 & Annotation rate $\geq$30\% & 30\% & 100\% & \textcolor{confirmed}{Confirmed} \\
-H2 & $<$20\% survive confounds & 20\% & 62\% & \textcolor{refuted}{Refuted} \\
-H3 & $\geq$95\% in superposition & 95\% & 99.4--100\% & \textcolor{confirmed}{Confirmed} \\
-H4 & Depth-dependent annotation & U-shape & 91--100\% all layers & \textcolor{refuted}{Refuted} \\
-H5 & Cross-checkpoint convergence & CCA $r>0.5$ & $\rho \approx 0$ & \textcolor{refuted}{Refuted} \\
-H6 & $<$30\% prototype-aligned & 30\% & 0.0\% & \textcolor{confirmed}{Confirmed} \\
-H7a & Moran's $I > 0$ & $>$0 & 0.122 & \textcolor{confirmed}{Confirmed} \\
-H7b & $I$ increases with depth & Increase & Decrease & \textcolor{refuted}{Refuted} \\
-H8 & $>$20\% context-dependent & 20\% & 67.2\% & \textcolor{confirmed}{Confirmed} \\
-H9 & $\geq$5\% tech-specific & 5\% & 0.95\% & \textcolor{refuted}{Refuted} \\
-H10 & Composition $\uparrow$ depth & Increase & Increase & \textcolor{confirmed}{Supported} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \subsection{Specific biological findings}
 
@@ -634,12 +634,12 @@ and to amplify them only when the local neighborhood confirms the signal.
 When the graph is removed, this regularization disappears and the raw
 inflammatory signal dominates.
 
-\textbf{Feature 592 (intestinal crypt niche)} is similarly graph-suppressed
-($\text{dep} = -0.50$) with extreme gene specificity (\emph{CES1} 61$\times$,
-\emph{AGTR1} 58$\times$). Ablating it nearly destroys the representation
-(cosine drops to 0.032), yet with the graph present it is modulated by
-neighborhood context. The 100\% prototype reassignment rate shows it is
-essential for the model's clustering of colonic tissue.
+\textbf{Feature 592} (the intestinal crypt ``master switch'' described
+above) is similarly graph-suppressed ($\text{dep} = -0.50$): despite
+being essential for colonic clustering (100\% prototype reassignment
+when ablated), the spatial graph modulates its activation downward.
+This suggests the model uses neighborhood context to gate crypt-specific
+signals.
 
 \subsubsection{Boundary features reveal fine structure in the prototype landscape}
 
@@ -682,12 +682,10 @@ either compartment alone.
 
 \subsection{Causal circuits in Novae's spatial graph}
 
-Following the causal circuit tracing methodology of
-\citet{sae_atlas}, we trace directed causal edges between SAE features
-across Novae's GATv2 layers: zero one feature at a source layer,
-propagate through subsequent layers via graph attention, and measure
-Cohen's $d$ on downstream features. This reveals how spatial concepts
-are computed across the model's depth.
+Applying the circuit tracing protocol described in Section~2.5, we
+discover directed causal relationships between SAE features across
+Novae's GATv2 layers. This reveals how spatial concepts are composed
+and regulated across the model's depth.
 
 \subsubsection{Circuit structure: 439 edges, balanced excitation and inhibition}
 
