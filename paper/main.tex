@@ -150,13 +150,17 @@ bone marrow, ovarian, prostate, uterine, and head-and-neck tissues.
 
 We hook 12 internal surfaces: the CellEmbedder output ($d=512$),
 10 GATv2 convolutional layers ($d=128$ for layers~0--8, $d=64$ for
-layer~9), and the aggregator ($d=64$). TopK SAEs \citep{gao2024}
-are trained at $32\times$ expansion with MSE reconstruction loss
-(Table~\ref{tab:sae_specs}). The TopK sparsity mechanism keeps
-exactly $k$ features active per cell (no additional regularization),
-producing 49{,}152 features in total across all surfaces.
+layer~9), and the aggregator ($d=64$). Each SAE consists of a linear
+encoder that maps a $d$-dimensional hidden state into an overcomplete
+$n$-dimensional feature space, a TopK sparsification step that retains
+only the $k$ highest-magnitude features per input (setting the rest to
+zero), and a linear decoder that reconstructs the original hidden state
+from the sparse code \citep{gao2024,makhzani2014}. SAEs are trained at
+$32\times$ expansion with MSE reconstruction loss
+(Table~\ref{tab:sae_specs}), producing 49{,}152 features in total
+across all surfaces.
 
-\begin{table}[h]
+\begin{table}[ht]
 \centering
 \caption{SAE specifications per surface. All SAEs achieve $\geq$80\%
 variance explained; the aggregator achieves 99.8\%.}
@@ -180,7 +184,7 @@ Each SAE feature is characterized through five lenses:
 \item \textbf{Top genes}: the 20 genes with highest mean expression
       in the feature's top-0.1\% cells (by activation magnitude),
       ranked by fold-change over the corpus baseline.
-\item \textbf{Enrichment analysis}: Enrichr \citep{enrichr,gsea2005}
+\item \textbf{Enrichment analysis}: Enrichr \citep{enrichr}
       against GO Biological Process \citep{go2021}, KEGG \citep{kegg2000},
       Reactome \citep{reactome2020}, PanglaoDB \citep{panglao}, and
       CellMarker \citep{cellmarker2019}.
@@ -276,7 +280,7 @@ only built-in interpretability interface---misses the vast majority of
 structure the model has learned. The SAE makes this hidden structure
 visible (Figure~\ref{fig:proto_align}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.65\textwidth]{figures/fig6_prototype_alignment.pdf}
 \caption{\textbf{SAE features are orthogonal to SwAV prototypes (H6).}
@@ -290,7 +294,7 @@ with the top-50 SVD axes, confirming that Novae uses \emph{superposition}:
 it packs many more concepts into its 64-dimensional aggregator than a
 linear decomposition could recover.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig2_hypotheses.pdf}
 \caption{\textbf{Preregistered hypothesis verdicts.} Green bars =
@@ -299,7 +303,7 @@ thresholds. See Table~\ref{tab:hypotheses} for details.}
 \label{fig:hypotheses}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[ht]
 \centering
 \caption{Summary of preregistered hypotheses.}
 \label{tab:hypotheses}
@@ -335,7 +339,7 @@ The SAE dictionary is not recovering noise---every feature at every
 depth corresponds to a recognizable biological program
 (Figure~\ref{fig:annotation_rate}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.5\textwidth]{figures/fig11_annotation_rate.pdf}
 \caption{\textbf{Annotation rate is uniformly high across all layers (H1/H4).}
@@ -350,8 +354,8 @@ Representative features illustrate the diversity of concepts encoded:
       top cells in colon tissue with 93\% niche specificity. Its top
       genes---\emph{DUOX2}, \emph{TFF1}, \emph{GUCA2A}, \emph{GUCA2B},
       \emph{OTOP2}---are canonical markers of intestinal secretory
-      epithelium. \emph{Duox2} generates reactive oxygen species for
-      antimicrobial defense; the \emph{guca2a/b} guanylins regulate
+      epithelium. \emph{DUOX2} generates reactive oxygen species for
+      antimicrobial defense; the \emph{GUCA2A}/\emph{GUCA2B} guanylins regulate
       fluid secretion via cGMP signaling. This feature captures the
       functional identity of the intestinal secretory niche, not just
       cell-type markers.
@@ -389,7 +393,7 @@ after the softmax, collapsing to the same effective self-only attention
 as bare self-loops. The consistency across regimes confirms the finding
 is robust (Figure~\ref{fig:graph_ablation}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig3_graph_ablation.pdf}
 \caption{\textbf{Graph ablation reveals spatial context dependence (H8).}
@@ -418,7 +422,7 @@ embedding reflects its \emph{entire local environment}, not just its
 immediate position. The aggregator is spatially \emph{informed} but
 not spatially \emph{localized}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figures/fig1_depth_story.pdf}
 \caption{\textbf{The depth story.} (A)~Spatial coherence (Moran's $I$)
@@ -479,7 +483,7 @@ conditions (Table~\ref{tab:crosstech}), so the correlation reflects
 technology invariance \emph{despite} condition mismatch---strengthening
 the finding.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.6\textwidth]{figures/fig4_crosstech.pdf}
 \caption{\textbf{Cross-technology coherence.} Spearman $\rho$ between
@@ -488,7 +492,7 @@ $\rho = 0.56$.}
 \label{fig:crosstech}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[ht]
 \centering
 \caption{Cross-technology coherence: Spearman $\rho$ between Xenium and
 MERSCOPE feature profiles on matched tissues.}
@@ -565,7 +569,7 @@ Processing the Perturb-map spatial CRISPR screen through
 feature--perturbation associations (FDR$<$0.05) across all 20 tested
 labels. Every perturbation label has at least one significantly
 responding SAE feature---including CRISPR-targeted genes like
-\emph{Tgfbr2} (25 responding features) and tumor lesion identifiers
+\emph{TGFBR2} (25 responding features) and tumor lesion identifiers
 (up to 28 features per lesion). This demonstrates that SAE features
 capture perturbation-level variation even on coarse Visium data
 ($\sim$55\,$\mu$m spots).
@@ -586,7 +590,7 @@ $>$95\%) are not clean cell-type markers but \emph{tissue-architecture
 features} encoding stromal and immune programs
 (Figure~\ref{fig:causal_ablation}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\textwidth]{figures/fig5_causal_ablation.pdf}
 \caption{\textbf{Causal ablation.} Each bar shows the prototype
@@ -696,7 +700,7 @@ nearly perfectly balanced: \textbf{51\% inhibitory}, meaning the
 GATv2 network uses both amplification and suppression of spatial
 features across layers (Figure~\ref{fig:circuit}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \begin{minipage}{0.48\textwidth}
 \centering
@@ -731,7 +735,7 @@ from transformer circuits where effects typically attenuate.}
 \label{fig:circuit}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig7_attenuation.pdf}
 \caption{\textbf{No effect attenuation in GATv2 circuits.} (A)~Edge count
@@ -876,7 +880,7 @@ the circuit. This matches the finding in \citet{sae_atlas} for
 transformers and validates the exhaustive approach for discovering
 rare but important hub features (Figure~\ref{fig:hub_degree}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.6\textwidth]{figures/fig8_hub_degree.pdf}
 \caption{\textbf{Heavy-tailed hub distribution from exhaustive tracing.}
@@ -885,7 +889,7 @@ have 1--2 downstream targets; a few hubs have up to 9.}
 \label{fig:hub_degree}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig9_combinatorial.pdf}
 \caption{\textbf{Combinatorial ablation reveals synergy.} For each triplet,
@@ -907,7 +911,7 @@ mechanism: features interact through the graph attention weights, so
 removing one feature changes the attention landscape in ways that
 compound with other ablations rather than canceling out.
 
-\subsubsection{Biological coherence is SAE-dependent, not cell-composition-driven}
+\subsection{Biological coherence is SAE-dependent, not cell-composition-driven}
 
 To test whether the SAE's biological interpretability is a property of
 the \emph{learned dictionary} rather than a trivial consequence of cell
