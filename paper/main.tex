@@ -73,7 +73,7 @@ Foundation models trained on these data, such as Novae
 \citep{novae}, learn to represent each cell in the context of its
 spatial neighborhood: a graph neural network \citep{kipf2017,velickovic2018,li2022gnn}
 aggregates gene-expression signals across Delaunay-triangulated
-neighbors, and a SwAV \citep{swav,simclr2020} contrastive head clusters the resulting embeddings into
+neighbors, and a SwAV \citep{swav} contrastive head clusters the resulting embeddings into
 512 hierarchical ``niche prototypes.'' The model performs well on
 downstream tasks (cell-type prediction, spatial domain segmentation),
 but \emph{what it has learned internally} is opaque. The 512
@@ -237,9 +237,30 @@ top-50 feature overlap.
 
 \paragraph{7. Perturbation validation.}
 The Perturb-map \citep{perturbmap} spatial CRISPR screen (mouse
-lung Visium, 6{,}363 spots, 20 perturbation labels) is processed
-through \texttt{novae-mouse-0} and SAE-encoded. Mann--Whitney~U tests
-with BH correction identify perturbation-responsive features.
+lung Visium, 6{,}363 spots, 20 labels including CRISPR targets and
+tumor lesion identifiers) is processed through \texttt{novae-mouse-0}
+and SAE-encoded. Mann--Whitney~U tests with BH correction identify
+perturbation-responsive features.
+
+\subsection{Causal circuit tracing}
+
+Beyond single-feature validation, we trace directed causal edges
+between SAE features across GATv2 layers. For each source feature $F$
+at source layer $L$, we zero $F$'s TopK coefficient in the SAE code,
+decode back to the hidden-state space, and let the modified state
+propagate through layers $L{+}1$ through the aggregator via the
+unmodified graph attention mechanism. At each downstream layer $M$,
+we SAE-encode the output and compute Cohen's $d$ between the baseline
+and ablated feature activations across all cells in the batch. Edges
+with $|d| > 0.5$ and sign consistency $> 0.6$ are retained. This
+protocol captures both direct computational effects and
+spatially-mediated effects (neighbors receiving ablated attention
+messages propagate the perturbation through the graph).
+
+For higher-order interactions, we ablate feature triplets in all 7
+combinations (A, B, C, AB, AC, BC, ABC) and compute the three-way
+redundancy ratio $R_{ABC} = \text{median}(d_A, d_B, d_C) / d_{ABC}$,
+where $R > 1$ indicates redundancy and $R < 1$ indicates synergy.
 
 % ===================== RESULTS =====================
 \section{Results}
@@ -340,7 +361,7 @@ features. 67.2\% of features exceed the 0.5 threshold.}
 \subsection{Spatial coherence decreases with depth---an unexpected finding}
 \label{sec:spatial_depth}
 
-We predicted that spatial coherence (Moran's $I$) would increase with
+We predicted that spatial coherence (Moran's $I$ \citep{moran1950}) would increase with
 layer depth, as deeper GATv2 layers integrate larger neighborhoods.
 The opposite is true: mean Moran's $I$ falls monotonically from 0.269
 (conv\_0) to 0.207 (conv\_8) and 0.119 (aggregator)
@@ -375,21 +396,21 @@ The prototype-domain ablation experiment reveals features that are
 the model's downstream clustering. Across 50 tested features:
 
 \begin{itemize}
-\item \textbf{Feature 592 (Meningeal Cells)} causes 100\% prototype
-      reassignment and 84.5\% domain reassignment when ablated, with a
-      decoder cosine of just 0.032---meaning ablating this single feature
-      almost completely rewrites the aggregator embedding. Its top genes
-      (\emph{ces1}, \emph{agtr1}, \emph{meis2}) implicate vascular
-      regulation and developmental transcription factors. This is a
-      ``master switch'' feature: the model's entire niche assignment
-      for cells in its activation zone depends on it.
+\item \textbf{Feature 592} (labeled ``Meningeal Cells'' by PanglaoDB,
+      but concentrated in colon tissue with intestinal crypt markers)
+      causes 100\% prototype reassignment and 84.5\% domain reassignment
+      when ablated, with a decoder cosine of just 0.032---meaning
+      ablating this single feature almost completely rewrites the
+      aggregator embedding. Its top genes (\emph{CES1} 61$\times$,
+      \emph{AGTR1} 58$\times$, \emph{MEIS2}) implicate vascular
+      regulation and developmental programs in the intestinal crypt.
+      This is a ``master switch'' feature: the model's entire niche
+      assignment for cells in its activation zone depends on it.
 
-\item \textbf{Feature 1021 (Pancreatic Stellate Cells)} in breast
-      tissue (68\%) causes 93\% domain reassignment. Its markers
-      \emph{postn} (periostin) and \emph{lrrc15} are hallmarks of
-      cancer-associated fibroblasts---the model has learned to
-      distinguish the stromal remodeling program of the tumor
-      microenvironment as a separate concept from normal stroma.
+\item \textbf{Feature 1021 (cancer-associated fibroblasts)} in breast
+      tissue causes 93\% domain reassignment---the highest of any tested
+      feature. We discuss its biological significance in detail below
+      (Section~\ref{sec:stroma}).
 
 \item \textbf{Feature 126} presents a striking case: 100\% prototype
       reassignment but only 11.5\% domain reassignment, with a
@@ -558,6 +579,7 @@ features that reveal tissue architecture at a level of detail not captured
 by the 512 SwAV prototypes.
 
 \subsubsection{The stromal remodeling program is the most causally important feature class}
+\label{sec:stroma}
 
 The features with the highest causal impact (prototype reassignment rate
 $>$95\%) are not clean cell-type markers but \emph{tissue-architecture
@@ -844,15 +866,6 @@ represented in Novae's dictionary. This experiment is not possible
 on non-spatial models and demonstrates that SAE features encode
 directional information along tissue spatial gradients.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.6\textwidth]{figures/fig8_hub_degree.pdf}
-\caption{\textbf{Heavy-tailed hub distribution from exhaustive tracing.}
-Out-degree distribution of 200 source features at conv\_5. Most features
-have 1--2 downstream targets; a few hubs have up to 9.}
-\label{fig:hub_degree}
-\end{figure}
-
 \subsubsection{Exhaustive tracing reveals heavy-tailed hub distribution}
 
 Tracing 200 source features exhaustively at conv\_5 yields 396 edges
@@ -863,7 +876,16 @@ median feature has only 2. The 90th percentile out-degree is 2,
 confirming that most features are not hubs---a small minority drives
 the circuit. This matches the finding in \citet{sae_atlas} for
 transformers and validates the exhaustive approach for discovering
-rare but important hub features.
+rare but important hub features (Figure~\ref{fig:hub_degree}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/fig8_hub_degree.pdf}
+\caption{\textbf{Heavy-tailed hub distribution from exhaustive tracing.}
+Out-degree distribution of 200 source features at conv\_5. Most features
+have 1--2 downstream targets; a few hubs have up to 9.}
+\label{fig:hub_degree}
+\end{figure}
 
 \begin{figure}[h]
 \centering
@@ -954,7 +976,7 @@ release.
 
 \subsection{Causal circuits are spatially mediated}
 
-The circuit tracing results add a fourth category to the taxonomy: causal
+The circuit tracing results add a further dimension to this taxonomy: causal
 effects in Novae propagate through the graph attention mechanism, so a
 feature ablated at layer~0 can influence features at layer~7--8 not just
 through the computational chain but through the \emph{spatial graph}.
