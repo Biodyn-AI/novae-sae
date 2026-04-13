@@ -35,7 +35,7 @@ on 12~million spatially resolved cells, and recover \textbf{49{,}152
 interpretable features} across all 12 internal surfaces of the model.
 Every one of the 2{,}048 aggregator-level features carries significant
 biological enrichment---from T~regulatory cells in tonsil follicles
-to goblet cells in intestinal crypts. A six-pronged causal-validation
+to goblet cells in intestinal crypts. A seven-pronged causal-validation
 suite reveals that \textbf{67\% of features genuinely depend on spatial
 context} (they vanish when the neighborhood graph is removed), only
 \textbf{0.95\% are technology-specific} (the model generalizes across
@@ -119,6 +119,13 @@ qualitatively different from cell-identity-only models?} Our graph-ablation
 experiment (H8), spatial-coherence analysis (H7), and cross-technology
 coherence (cross-tech) are uniquely enabled by the spatial setting and
 could not be performed on non-spatial models like Geneformer.
+Beyond hypothesis testing, we perform causal circuit tracing---zeroing
+individual features and measuring their downstream effects across GATv2
+layers---to discover directed causal relationships between spatial
+concepts. This extends the circuit-tracing methodology of
+\citet{sae_atlas} from transformer residual streams to graph attention
+networks, where causal effects propagate through the spatial tissue
+graph.
 
 % ===================== METHODS =====================
 \section{Methods}
@@ -404,6 +411,10 @@ paired Xenium and MERSCOPE slides for 7 tissues
 (Table~\ref{tab:crosstech}). The mean cross-technology Spearman
 $\rho = 0.56$ demonstrates that the same features activate consistently
 regardless of the measurement platform (Figure~\ref{fig:crosstech}).
+Note that most tissue pairs compare normal (Xenium) to cancer (MERSCOPE)
+conditions (Table~\ref{tab:crosstech}), so the correlation reflects
+technology invariance \emph{despite} condition mismatch---strengthening
+the finding.
 
 \begin{figure}[h]
 \centering
@@ -439,9 +450,13 @@ Skin & 0.482 & normal & melanoma \\
 \subsection{Most features survive confound controls (H2)}
 
 Of the 1{,}801 aggregator features with baseline niche signal
-(top-l7-fraction $\geq 0.25$), \textbf{62\%} survive all three
-implemented residualization controls (slide effect-size $\geq 2\times$
-baseline, technology residualization, cell-type-l20 residualization).
+(top-l7-fraction $\geq 0.25$), \textbf{62\%} survive all three implemented controls:
+(i)~slide effect-size $\geq 2\times$ baseline (the feature's top cells
+concentrate on one slide more than chance),
+(ii)~technology residualization (the niche signal persists after
+regressing out per-technology mean activation), and
+(iii)~cell-type residualization (the niche signal persists after
+regressing out fine-grained domain-l20 cluster means).
 The full 4-level hierarchical gate (adding degree-preserving graph
 rewire from the graph ablation v2 analysis) passes \textbf{39.7\%}
 of all 2{,}048 features; 79.1\% pass at least 3 of 4 controls.
@@ -534,16 +549,15 @@ H10 & Composition $\uparrow$ depth & Increase & Increase & \textcolor{confirmed}
 \end{tabular}
 \end{table}
 
-% ===================== BIOLOGICAL FINDINGS =====================
-\section{Biological findings: what Novae has learned about tissues}
+\subsection{Specific biological findings}
 
 The aggregate statistics above establish \emph{that} Novae's features are
-interpretable, spatially grounded, and causally structured. In this section
-we ask \emph{what specific biology} the model has learned, highlighting
+interpretable, spatially grounded, and causally structured. We now ask
+\emph{what specific biology} the model has learned, highlighting
 features that reveal tissue architecture at a level of detail not captured
 by the 512 SwAV prototypes.
 
-\subsection{The stromal remodeling program is the most causally important feature class}
+\subsubsection{The stromal remodeling program is the most causally important feature class}
 
 The features with the highest causal impact (prototype reassignment rate
 $>$95\%) are not clean cell-type markers but \emph{tissue-architecture
@@ -580,7 +594,7 @@ axis in the tumor microenvironment. Removing this single feature forces 95\%
 of affected cells into different Leiden clusters, showing that Novae's
 entire spatial domain structure partly depends on encoding immune presence.
 
-\subsection{Some features are actively suppressed by spatial context}
+\subsubsection{Some features are actively suppressed by spatial context}
 
 An unexpected finding: several features have \emph{negative} contextual
 dependency---they activate \emph{more strongly} when the spatial graph
@@ -605,7 +619,7 @@ inflammatory signal dominates.
 neighborhood context. The 100\% prototype reassignment rate shows it is
 essential for the model's clustering of colonic tissue.
 
-\subsection{Boundary features reveal fine structure in the prototype landscape}
+\subsubsection{Boundary features reveal fine structure in the prototype landscape}
 
 \textbf{Feature 126 (hypoxia / decidual program)} presents a paradox:
 100\% prototype reassignment but only 11.5\% domain reassignment,
@@ -621,7 +635,7 @@ changing the coarser domain assignment (11.5\%). Such
 prototype landscape that Novae's built-in clustering hierarchy
 cannot capture.
 
-\subsection{Niche features encode microenvironment, not cell type}
+\subsubsection{Niche features encode microenvironment, not cell type}
 
 \textbf{Feature 502 (endothelial vascular niche)} is labeled
 ``Microfold Cells'' by PanglaoDB (FDR = 8.4e-8) but its domain
@@ -644,9 +658,7 @@ compartments. Its moderate graph dependency ($\text{dep} = 0.47$)
 confirms it needs spatial context to distinguish the boundary from
 either compartment alone.
 
-% ===================== DISCUSSION =====================
-% ===================== CIRCUIT TRACING =====================
-\section{Causal circuits in Novae's spatial graph}
+\subsection{Causal circuits in Novae's spatial graph}
 
 Following the causal circuit tracing methodology of
 \citet{sae_atlas}, we trace directed causal edges between SAE features
@@ -655,7 +667,7 @@ propagate through subsequent layers via graph attention, and measure
 Cohen's $d$ on downstream features. This reveals how spatial concepts
 are computed across the model's depth.
 
-\subsection{Circuit structure: 439 edges, balanced excitation and inhibition}
+\subsubsection{Circuit structure: 439 edges, balanced excitation and inhibition}
 
 Tracing 90 source features across three layers (conv\_0, conv\_5,
 conv\_9) on the brain slide (24{,}406 cells) yields \textbf{439 causal
@@ -708,7 +720,7 @@ size remains strong at all distances.}
 \label{fig:attenuation}
 \end{figure}
 
-\subsection{Effects do not attenuate---a GATv2-specific finding}
+\subsubsection{Effects do not attenuate---a GATv2-specific finding}
 
 In transformer-based models, causal effects decay with layer distance
 \citep{sae_atlas}. In Novae's GATv2, we observe the opposite: edges
@@ -718,7 +730,7 @@ gap~3--4 (63 and 27). The mean $|d|$ remains strong at all distances
 at each layer, a cell's neighbors propagate its modified state through
 the attention mechanism, maintaining signal strength across depth.
 
-\subsection{Circuit hubs: myoepithelial cells as a convergence point}
+\subsubsection{Circuit hubs: myoepithelial cells as a convergence point}
 
 The top target hub---conv\_7/F3806 (\textbf{Myoepithelial Cells},
 57 incoming edges)---sits at the interface of epithelium and stroma.
@@ -732,7 +744,7 @@ Cells}, FDR = 3.2e-18). This confirms the earlier finding that immune
 infiltrate is causally downstream of diverse tissue programs in Novae's
 representation.
 
-\subsection{Circuits encode known cellular programs}
+\subsubsection{Circuits encode known cellular programs}
 
 Individual circuit edges map onto recognized biological relationships.
 Three circuits stand out:
@@ -777,7 +789,7 @@ multiple tissue compartments. The model mirrors this role: the
 myoepithelial hub is where diverse cell-type signals at layer~5
 converge into a single tissue-boundary concept at layer~7.
 
-\subsection{Process hierarchy: innate immunity early, adaptive late}
+\subsubsection{Process hierarchy: innate immunity early, adaptive late}
 
 Mapping each GO/cell-type term to its mean layer position in the
 circuit graph reveals a spatial analogue of the transformer ``signaling
@@ -787,7 +799,7 @@ appear at \textbf{early layers} ($\sim$layer~5), while \textbf{adaptive
 immune} programs (B~cell activation, T~memory cells, AP-2 transcription)
 appear at \textbf{late layers} ($\sim$layer~8).
 
-\subsection{Gene-level predictions: 426 novel gene pairs}
+\subsubsection{Gene-level predictions: 426 novel gene pairs}
 
 Translating circuit edges to gene pairs via top-loading genes yields
 426 unique gene-pair predictions. Of the 104 pairs where both genes
@@ -802,7 +814,7 @@ Both are structural proteins, and the edge suggests a spatial regulatory
 relationship between cytoskeletal organization and smooth-muscle
 contractility that is mediated by Novae's graph attention.
 
-\subsection{Causal edges are statistically grounded (PMI validation)}
+\subsubsection{Causal edges are statistically grounded (PMI validation)}
 
 To verify that circuit edges reflect real co-activation patterns (not
 just ablation artifacts), we compare the pointwise mutual information
@@ -815,7 +827,7 @@ identical cell populations. The causal relationship captures a
 \emph{computational} dependency (ablating one changes the other) that
 goes beyond simple co-occurrence.
 
-\subsection{Spatial gradient steering: a novel experiment}
+\subsubsection{Spatial gradient steering: a novel experiment}
 
 As a contribution unique to the spatial setting, we test whether
 amplifying individual SAE features (multiplying their activation by
@@ -841,7 +853,7 @@ have 1--2 downstream targets; a few hubs have up to 9.}
 \label{fig:hub_degree}
 \end{figure}
 
-\subsection{Exhaustive tracing reveals heavy-tailed hub distribution}
+\subsubsection{Exhaustive tracing reveals heavy-tailed hub distribution}
 
 Tracing 200 source features exhaustively at conv\_5 yields 396 edges
 (vs.\ 74 from the original 30-feature sample). The out-degree
@@ -862,7 +874,7 @@ $R_{ABC} < 1$ (synergy). This is the opposite of transformer redundancy.}
 \label{fig:combinatorial}
 \end{figure}
 
-\subsection{Feature ablation shows synergy, not redundancy}
+\subsubsection{Feature ablation shows synergy, not redundancy}
 
 Ablating 10 feature triplets at conv\_0 in all 7 combinations (A, B, C,
 AB, AC, BC, ABC) reveals \textbf{mild synergy} (median three-way
@@ -875,7 +887,7 @@ mechanism: features interact through the graph attention weights, so
 removing one feature changes the attention landscape in ways that
 compound with other ablations rather than canceling out.
 
-\subsection{Biological coherence is SAE-dependent, not cell-composition-driven}
+\subsubsection{Biological coherence is SAE-dependent, not cell-composition-driven}
 
 To test whether the SAE's biological interpretability is a property of
 the \emph{learned dictionary} rather than a trivial consequence of cell
@@ -949,11 +961,11 @@ through the computational chain but through the \emph{spatial graph}.
 This is fundamentally different from transformer residual-stream
 propagation: in Novae, removing a feature changes the attention-weighted
 messages that all affected cells send to their neighbors, creating a
-spatially-mediated causal cascade. The lack of effect attenuation (GAP~7)
+spatially-mediated causal cascade. The lack of effect attenuation across layers
 is likely a consequence of this re-amplification: each layer's graph
 attention refreshes the signal from the modified neighborhood.
 
-The 70\% novelty rate of gene-level predictions (GAP~5) suggests that
+The 70\% novelty rate of gene-level predictions suggests that
 circuit tracing discovers relationships that GO annotation alone does not
 capture. These predictions are testable with spatial perturbation screens
 once suitable datasets at single-cell resolution become available.
