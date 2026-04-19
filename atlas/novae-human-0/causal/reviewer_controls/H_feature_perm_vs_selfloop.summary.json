@@ -1,0 +1,14 @@
+{
+  "n_active": 2024,
+  "selfloop_v2_dep_p50": 0.8346579364783929,
+  "selfloop_v2_frac_dep_gt_0.5": 0.6719367588932806,
+  "feature_perm_dep_p50": 0.37477658695219573,
+  "feature_perm_frac_dep_gt_0.5": 0.4031620553359684,
+  "spearman_rho_selfloop_vs_featureperm": NaN,
+  "spearman_p": NaN,
+  "both_gt_0.5": 530,
+  "only_selfloop": 792,
+  "only_featureperm": 286,
+  "neither": 356,
+  "frac_selfloop_confirmed_by_featureperm": 0.4009077155824508
+}

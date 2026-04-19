@@ -1,0 +1,11 @@
+{
+  "n_features": 2048,
+  "real_tissue_term_match_rate": 0.0029296875,
+  "shuffled_null_rate": 0.0018790690104166666,
+  "shuffled_null_95CI": [
+    0.0014017740885416668,
+    0.0023508707682291666
+  ],
+  "excess_over_null": 0.0010506184895833334,
+  "interpretation": "The excess above the shuffle null is the *specificity* signal. Annotation rate alone (100% in this corpus) is a ceiling artifact; specificity is what the paper should report alongside."
+}

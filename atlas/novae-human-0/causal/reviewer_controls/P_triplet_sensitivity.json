@@ -1,0 +1,19 @@
+{
+  "n_triplets": 10,
+  "unique_feat_A": 1,
+  "unique_feat_B": 1,
+  "unique_feat_C": 10,
+  "fixed_pair_AB": [
+    2107,
+    2829
+  ],
+  "independence_across_triplets": false,
+  "R_AB_value": 0.9926709160607669,
+  "R_AB_std": 0.0,
+  "R_ABC_median": 0.9576482999297367,
+  "R_ABC_min": 0.9565060027343103,
+  "R_ABC_max": 0.9776531486127006,
+  "R_ABC_range_from_C_choice": 0.021147145878390283,
+  "conclusion": "The 10 triplets are not 10 independent samples: they share the same (A, B) pair with only the third feature varying. The reported bootstrap CI [0.957, 0.966] therefore reflects the variability of adding a third feature to ONE pair, not a general property of feature triplets in the SAE. The synergy claim holds in the narrow sense that the observed pair-plus-C triplets are near-additive but slightly synergistic; the claim does NOT generalize to arbitrary triplets from the SAE dictionary without additional ablation experiments on independent pairs.",
+  "needed_followup": "Re-run combinatorial ablation on \u22653 independent (A, B) pairs with \u22655 C-choices each, to separate 'pair-level synergy' from 'triplet-level synergy' and test generalization."
+}

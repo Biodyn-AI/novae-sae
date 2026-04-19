@@ -1,0 +1,15 @@
+{
+  "real_annotation_rate": 1.0,
+  "per_library_hit_rate": {
+    "CellMarker_Augmented_2021": 1.0,
+    "GO_Biological_Process_2023": 1.0,
+    "KEGG_2021_Human": 0.99951171875,
+    "PanglaoDB_Augmented_2021": 1.0,
+    "Reactome_2022": 1.0
+  },
+  "random_gene_null_any_rate": NaN,
+  "n_samples": 200,
+  "panel_size_G": 487,
+  "top_list_size_S": 20,
+  "caveat": "This is a desk-controllable approximation. A definitive null requires re-running Enrichr on 200 random 20-gene samples; the framework is in place (see random_gene_null_online.py)."
+}

@@ -1,0 +1,25 @@
+{
+  "n_triplets": 10,
+  "median_R_ABC": 0.9576482999297367,
+  "R_ABC_values": [
+    0.9776531486127006,
+    0.9565060027343103,
+    0.9566720469725811,
+    0.9572334877433655,
+    0.9574953230722607,
+    0.9702001946441277,
+    0.957161798053732,
+    0.9637246552213606,
+    0.9578012767872125,
+    0.9625798055713914
+  ],
+  "d_ABC_median": 0.04025012254714966,
+  "d_component_median": 0.03852882981300354,
+  "bootstrap_median_CI95": [
+    0.9569527673579733,
+    0.9663900001077596
+  ],
+  "prob_R_geq_1": 0.0,
+  "prob_R_leq_0p59_transformer": 0.0,
+  "interpretation": "Synergy claim holds iff upper CI bound < 1. Effect sizes are small (d_A..d_C ~ 0.04), so the ratio is ill-conditioned; the absolute deviation from 1 is <0.05."
+}

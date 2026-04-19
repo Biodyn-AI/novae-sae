@@ -1,6 +1,6 @@
 # Novae SAE: Sparse Autoencoder Atlas for the Novae Spatial Foundation Model
 
-**Paper**: *Sparse autoencoder atlas of the Novae spatial foundation model reveals 49,152 interpretable biological concepts*
+**Paper**: *A sparse autoencoder atlas of the Novae spatial foundation model, with matched-null controls for interpretability claims*
 
 **Interactive atlas**: https://biodyn-ai.github.io/novae-atlas/
 
@@ -10,17 +10,20 @@
 
 ## Overview
 
-This repository contains the complete analysis codebase for applying sparse autoencoder (SAE) mechanistic interpretability to [Novae](https://www.nature.com/articles/s41592-025-02899-6), a GATv2 graph foundation model for spatial transcriptomics. We train TopK SAEs on every internal layer of the `novae-human-0` checkpoint, characterize 49,152 learned features with gene markers, cell-type databases, and spatial niche assignments, and apply a comprehensive causal-validation suite including graph ablation, prototype-domain reassignment, confound survival, cross-technology coherence, causal circuit tracing, and spatial gradient steering.
+This repository contains the complete analysis codebase for applying sparse autoencoder (SAE) mechanistic interpretability to [Novae](https://www.nature.com/articles/s41592-025-02899-6), a GATv2 graph foundation model for spatial transcriptomics. We train TopK SAEs on every internal layer of the `novae-human-0` checkpoint, extract a dictionary of 49,152 features, and apply a comprehensive validation suite in which every claim is calibrated against an appropriate null: panel-saturation for annotation rate, matched-magnitude random directions for single-feature ablation, feature-permutation for graph ablation, and raw expression for cross-technology coherence.
 
 ### Key findings
 
-- **100%** of aggregator features carry significant biological enrichment (H1)
-- **67%** of features depend on spatial context — they vanish without the neighborhood graph (H8)
-- **0.95%** are technology-specific — the model generalizes across Xenium, MERSCOPE, and CosMx (H9)
-- **439 causal circuit edges** with balanced excitation/inhibition (51%) and no effect attenuation (unlike transformers)
-- Feature triplets show **synergy** (R=0.96), the opposite of transformer redundancy
-- **426 novel gene-pair predictions** (70% not in GO)
-- **81% vs 40%** annotation rate for real vs shuffled SAE (coherence is SAE-dependent)
+- Aggregator features are pervasively superposed: 0.0% align with any SwAV prototype at |cos|≥0.7; ≥99.4% are non-aligned with the top-50 SVD axes per surface.
+- Under a doubly-controlled graph-ablation protocol (self-loop + feature-permutation), **26%** of features are genuinely context-dependent. Self-loop alone flags 67%; feature-permutation (graph intact, neighbor content scrambled) flags 40%.
+- Of 50 prototype-ablation tests against a matched-magnitude random-direction null, **17 features exceed the null's upper 95% CI** (direction-specific load-bearing); 7 fall below the null's lower CI; 26 are statistically indistinguishable from random.
+- Cross-technology Spearman ρ_SAE = 0.56 between Xenium and MERSCOPE feature profiles is indistinguishable from a raw-expression baseline of ρ_raw = 0.57; only **0.95%** of features are strictly technology-specific. The continuous cross-tech signal is inherited from shared panel biology, not added by the SAE.
+- Causal circuit tracing on one brain slide yields **439 directed edges**; combinatorial triplet ablation gives R_ABC ∈ [0.957, 0.966] (bootstrap 95% CI) for one tested feature pair, a near-additive regime with component effects d ≈ 0.04.
+- Spatial-gradient steering on the colon crypt–villus axis produces a **22 pp** change (39% → 61%) between attenuation and amplification, the informative effect-size statement against an asymmetric unperturbed baseline.
+
+### Scope caveats
+
+Several claims common in SAE-atlas work do not survive these calibrated controls. Annotation rate (100% FDR<0.05 per library) is a panel-saturation ceiling: a random 20-gene draw from the 487-gene Xenium panel already hits ≥99.95% against each Enrichr library. Cross-checkpoint convergence (H5) is not identified at the profile level because the three Novae checkpoints use non-overlapping gene panels. The single-slide circuit trace does not support claims about attenuation with layer depth or the generality of the observed synergy pattern; multi-slide replication is outlined as a planned extension.
 
 ## Repository structure
 
@@ -68,15 +71,42 @@ novae-sae/
 │   ├── 23_spatial_steering.py         # GAP 16: spatial gradient steering (NOVEL)
 │   ├── 24_pmi_vs_causal.py            # GAP 9: PMI co-activation vs causal edges
 │   ├── 25_sae_dissociation.py         # GAP 17: real vs shuffled SAE dissociation
+│   ├── 26_reviewer_controls.py        # Bootstrap R_ABC, gap-normalized attenuation,
+│   │                                  #  random-gene null, steering baseline, novelty baseline
+│   ├── 27_random_direction_null.py    # Matched-magnitude random-direction null for
+│   │                                  #  prototype-reassignment ablation (50 features, 30 seeds)
+│   ├── 28_crosstech_rawexpr_baseline.py # Raw-expression Spearman ρ baseline for §3.6
+│   ├── 29_feature_perm_graph_ablation.py # Feature-permutation graph ablation (brain, kidney,
+│   │                                     #  pancreas; 225,867 cells) — the H8 second control
+│   ├── 30_multislide_circuit_tracing.py # Multi-slide circuit replication (planned)
+│   ├── 31_random_init_sae_baseline.py   # Random-init Novae SAE baseline (planned)
+│   ├── 32_sae_seed_stability.py         # SAE seed-stability test (planned)
+│   ├── 33_perturbmap_composition_control.py # Composition-regressed Perturb-map (planned)
+│   ├── 34_shuffled_labels_specificity.py # Shuffle-null specificity on tissue/term matching
+│   ├── 35_v2_figures.py                # Generate matched-null figures (12, 13)
+│   ├── 36_triplet_sensitivity.py       # Triplet-selection structure analysis
 │   └── 99_summary.py                  # Generate summary statistics
 ├── paper/
-│   ├── main.tex                       # Paper source (20 pages, 50 references)
-│   └── figures/                       # Generated figures (PDF)
+│   ├── main.tex                       # Paper source
+│   └── figures/                       # Generated figures (PDF, PNG)
+├── atlas/novae-human-0/causal/reviewer_controls/
+│   ├── A_rabc_bootstrap.json          # Bootstrap CI on R_ABC triplet synergy
+│   ├── B_gap_normalized.{parquet,json} # Gap-normalized circuit edge counts
+│   ├── C_random_gene_null.json         # Per-library panel-saturation hit rates
+│   ├── D_steering_baseline.json        # Steering α-dependent push distributions
+│   ├── E_gene_pair_novelty.json        # 30× random-pair enrichment for the 426 pairs
+│   ├── F_random_direction_null.{parquet,json} # Matched-magnitude null ablation (50 features)
+│   ├── G_crosstech_rawexpr_baseline.{parquet,json} # ρ_raw vs ρ_SAE (7 tissue pairs)
+│   ├── H_feature_perm_ablation.{parquet,json}   # Feature-permutation dependency (3 slides)
+│   ├── H_feature_perm_vs_selfloop.{parquet,json} # Merged self-loop + feature-perm analysis
+│   ├── M_specificity.json              # Tissue-term specificity vs shuffle null
+│   ├── P_triplet_sensitivity.json      # Triplet-selection structure analysis
+│   └── summary.json                    # Aggregate summary of the above
 ├── RESEARCH_AND_IMPLEMENTATION_PLAN.md # Original research plan
-├── CIRCUIT_TRACING_PLAN.md            # Circuit tracing gap analysis + plan
-├── PHASE4_5_STATUS.md                 # Phase 4/5 completion status
+├── CIRCUIT_TRACING_PLAN.md             # Circuit tracing gap analysis + plan
+├── PHASE4_5_STATUS.md                  # Phase 4/5 completion status
 └── configs/
-    └── environment.yml                # Conda environment specification
+    └── environment.yml                 # Conda environment specification
 ```
 
 ## Quick start
@@ -169,6 +199,15 @@ python scripts/23_spatial_steering.py
 python scripts/24_pmi_vs_causal.py
 python scripts/25_sae_dissociation.py
 
+# Matched-null controls (outputs under atlas/novae-human-0/causal/reviewer_controls/)
+python scripts/26_reviewer_controls.py        # A/B/C/D/E: bootstrap, gap-norm, panel null, steering, novelty
+python scripts/27_random_direction_null.py    # F: matched-magnitude ablation null
+python scripts/28_crosstech_rawexpr_baseline.py  # G: raw-expression cross-tech baseline
+python scripts/29_feature_perm_graph_ablation.py # H: feature-permutation graph ablation
+python scripts/34_shuffled_labels_specificity.py # M: tissue-term specificity vs shuffle
+python scripts/36_triplet_sensitivity.py        # P: triplet-selection structure
+python scripts/35_v2_figures.py                 # Figures 12, 13
+
 # Phase 5: Build atlas data
 python scripts/05_build_atlas_data.py
 ```
@@ -205,8 +244,8 @@ pdflatex main.tex && pdflatex main.tex  # Two passes for references
 
 ```bibtex
 @article{kendiukhov2026novae_sae,
-  title={Sparse autoencoder atlas of the Novae spatial foundation model
-         reveals 49,152 interpretable biological concepts},
+  title={A sparse autoencoder atlas of the Novae spatial foundation model,
+         with matched-null controls for interpretability claims},
   author={Kendiukhov, Ihor},
   year={2026},
   note={University of T\"ubingen}

@@ -1,0 +1,7 @@
+{
+  "n_pairs": 7,
+  "raw_expr_spearman_mean": 0.5709441854134052,
+  "sae_feature_spearman_mean": 0.5596276008054674,
+  "delta_sae_over_raw": -0.01131658460793783,
+  "interpretation": "If SAE \u03c1 > raw-expr \u03c1, the SAE captures tech-invariant structure beyond the expression data itself. If SAE \u03c1 \u2248 raw-expr \u03c1, the cross-tech coherence claim is driven by shared biology, not by the model."
+}

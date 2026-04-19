@@ -1,0 +1,8 @@
+{
+  "traced_source_layers": [
+    0,
+    5
+  ],
+  "max_target_layer": 8,
+  "interpretation": "Raw edge counts rise with gap simply because earlier source layers reach more downstream targets. 'Edges per traced (source, target) pair' is the correct attenuation metric; mean_abs_d conditional on an edge is stable but not strongly increasing."
+}

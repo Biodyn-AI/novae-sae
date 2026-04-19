@@ -1,0 +1,13 @@
+{
+  "n_pairs_in_panel": 401,
+  "observed_shared_proxy_rate": 0.20698254364089774,
+  "random_pair_shared_proxy_rate": 0.00715211970074813,
+  "random_pair_95CI": [
+    0.0,
+    0.017456359102244388
+  ],
+  "novelty_relative_to_random": 0.7930174563591023,
+  "novelty_excess_over_random": -0.1998304239401496,
+  "proxy_threshold": 50,
+  "caveat": "'Shared' here is a co-occurrence proxy (>=50 shared feature top-gene lists), not GO overlap. The delta over random is what supports or weakens the 70%-novel claim; the absolute 70% is uninterpretable without a baseline."
+}

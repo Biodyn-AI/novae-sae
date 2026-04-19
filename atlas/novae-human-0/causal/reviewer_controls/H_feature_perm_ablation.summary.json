@@ -1,0 +1,11 @@
+{
+  "n_features": 2048,
+  "n_active": 1964,
+  "n_dep_gt_0.5": 816,
+  "n_dep_gt_0.2": 1158,
+  "median_dep": 0.37477658695219573,
+  "mean_dep": 0.12345404551809859,
+  "slides_processed": 3,
+  "cells_processed": 225867,
+  "interpretation": "If feature_perm_dependency \u2248 self-loop dependency, the self-loop intervention was actually measuring loss-of-neighbor-content, not loss-of-graph-topology \u2014 which is the correct, biologically meaningful effect. If feature_perm dep << self-loop dep, the self-loop number was mostly driven by the architectural shift; then the 'context-dependent' claim must be narrowed."
+}

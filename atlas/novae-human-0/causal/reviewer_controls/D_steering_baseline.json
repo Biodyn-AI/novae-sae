@@ -1,0 +1,35 @@
+{
+  "p_positive_low_alpha": 0.39,
+  "p_positive_high_alpha": 0.61,
+  "delta": 0.21999999999999997,
+  "per_alpha_tilt": {
+    "0.5": {
+      "n": 100,
+      "mean_push": 5.147971805509799e-05,
+      "p_positive": 0.39,
+      "p_positive_binom_ci95": [
+        0.3,
+        0.48
+      ]
+    },
+    "2.0": {
+      "n": 100,
+      "mean_push": -0.00010295943763920706,
+      "p_positive": 0.61,
+      "p_positive_binom_ci95": [
+        0.52,
+        0.7
+      ]
+    },
+    "5.0": {
+      "n": 100,
+      "mean_push": -0.0004118377049832034,
+      "p_positive": 0.61,
+      "p_positive_binom_ci95": [
+        0.51,
+        0.7
+      ]
+    }
+  },
+  "interpretation": "Report the alpha-dependent *change* in P(push>0), not 61% vs 50%. The 50% chance level implicitly assumes a symmetric baseline; the real null is the low-alpha rate."
+}

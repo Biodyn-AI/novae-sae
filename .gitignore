@@ -6,6 +6,13 @@ saes/
 atlas/
 logs/
 
+# Track the small matched-null summary outputs (scientifically essential, ~400 KB)
+!atlas/
+!atlas/novae-human-0/
+!atlas/novae-human-0/causal/
+!atlas/novae-human-0/causal/reviewer_controls/
+!atlas/novae-human-0/causal/reviewer_controls/**
+
 # Python
 __pycache__/
 *.pyc
