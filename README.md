@@ -2,9 +2,10 @@
 
 **Paper**: *A sparse autoencoder atlas of the Novae spatial foundation model, with matched-null controls for interpretability claims*
 
-**Interactive atlas**: https://biodyn-ai.github.io/novae-atlas/
-
-**Atlas source code**: https://github.com/Biodyn-AI/novae-atlas
+Anonymized repository released with a double-blind venue submission.
+Authorship and affiliation information, interactive-atlas URLs, and
+upstream-work citations have been removed; see the paper's camera-
+ready version for attribution.
 
 ---
 
@@ -102,9 +103,6 @@ novae-sae/
 │   ├── M_specificity.json              # Tissue-term specificity vs shuffle null
 │   ├── P_triplet_sensitivity.json      # Triplet-selection structure analysis
 │   └── summary.json                    # Aggregate summary of the above
-├── RESEARCH_AND_IMPLEMENTATION_PLAN.md # Original research plan
-├── CIRCUIT_TRACING_PLAN.md             # Circuit tracing gap analysis + plan
-├── PHASE4_5_STATUS.md                  # Phase 4/5 completion status
 └── configs/
     └── environment.yml                 # Conda environment specification
 ```
@@ -242,23 +240,14 @@ pdflatex main.tex && pdflatex main.tex  # Two passes for references
 
 ## Citation
 
-```bibtex
-@article{kendiukhov2026novae_sae,
-  title={A sparse autoencoder atlas of the Novae spatial foundation model,
-         with matched-null controls for interpretability claims},
-  author={Kendiukhov, Ihor},
-  year={2026},
-  note={University of T\"ubingen}
-}
-```
+Citation details are withheld during anonymous review. A full BibTeX
+entry will be added to the camera-ready version.
 
 ## Related work
 
-- [Novae](https://www.nature.com/articles/s41592-025-02899-6) — the spatial foundation model we interpret (Blampey et al., Nature Methods 2025)
-- [SAE Atlas methodology](https://arxiv.org/abs/2603.02952) — the upstream SAE pipeline for Geneformer/scGPT (Kendiukhov, 2026)
-- [Causal Circuit Tracing](https://arxiv.org/abs/2603.01752) — causal circuit methodology adapted for GATv2 (Kendiukhov, 2026)
-- [Exhaustive Circuit Mapping](https://arxiv.org/abs/2603.11940) — exhaustive tracing + combinatorial ablation (Kendiukhov, 2026)
+- [Novae](https://www.nature.com/articles/s41592-025-02899-6) — the spatial foundation model we interpret (Blampey et al., Nature Methods 2025).
+- Prior work on SAE atlases for single-cell foundation models (Geneformer, scGPT), circuit-tracing methodology for transformer residual streams, and exhaustive / combinatorial ablation are referenced in the paper; citations are withheld here during double-blind review.
 
 ## License
 
-BSD-3-Clause (matching the Novae model license).
+BSD-3-Clause.
